@@ -14,7 +14,7 @@ namespace Nop.Plugin.Misc.Forums.Services;
 /// <summary>
 /// Plugin installation service
 /// </summary>
-public class ForumsInstallService
+public class ForumInstallService
 {
     #region Fields
 
@@ -33,7 +33,7 @@ public class ForumsInstallService
 
     #region Ctor
 
-    public ForumsInstallService(EmailAccountSettings emailAccountSettings,
+    public ForumInstallService(EmailAccountSettings emailAccountSettings,
         ForumService forumService,
         ICustomerService customerService,
         IEmailAccountService emailAccountService,
@@ -116,16 +116,15 @@ public class ForumsInstallService
             ["Admin.ContentManagement.MessageTemplates.Description.Forums.NewForumPost"] = "This message template is used when a new forum post in certain forum topic is created. The message is received by a store owner.",
             ["Admin.ContentManagement.MessageTemplates.Description.Forums.NewForumTopic"] = "This message template is used when a new forum topic is created. The message is received by a store owner.",
 
-            ["Enums.Nop.Core.Domain.Forums.EditorType.BBCodeEditor"] = "BBCode editor",
-            ["Enums.Nop.Core.Domain.Forums.EditorType.HtmlEditor"] = "Html editor",
-            ["Enums.Nop.Core.Domain.Forums.EditorType.MarkdownEditor"] = "Markdown editor",
-            ["Enums.Nop.Core.Domain.Forums.EditorType.SimpleTextBox"] = "Simple textbox",
-            ["Enums.Nop.Core.Domain.Forums.ForumSearchType.All"] = "Topic titles and post text",
-            ["Enums.Nop.Core.Domain.Forums.ForumSearchType.PostTextOnly"] = "Post text only",
-            ["Enums.Nop.Core.Domain.Forums.ForumSearchType.TopicTitlesOnly"] = "Topic titles only",
-            ["Enums.Nop.Core.Domain.Forums.ForumTopicType.Announcement"] = "Announcement",
-            ["Enums.Nop.Core.Domain.Forums.ForumTopicType.Normal"] = "Normal",
-            ["Enums.Nop.Core.Domain.Forums.ForumTopicType.Sticky"] = "Sticky",
+            ["Enums.Nop.Plugin.Misc.Forums.Domain.EditorType.BBCodeEditor"] = "BBCode editor",
+            ["Enums.Nop.Plugin.Misc.Forums.Domain.EditorType.MarkdownEditor"] = "Markdown editor",
+            ["Enums.Nop.Plugin.Misc.Forums.Domain.EditorType.SimpleTextBox"] = "Simple textbox",
+            ["Enums.Nop.Plugin.Misc.Forums.Domain.ForumSearchType.All"] = "Topic titles and post text",
+            ["Enums.Nop.Plugin.Misc.Forums.Domain.ForumSearchType.PostTextOnly"] = "Post text only",
+            ["Enums.Nop.Plugin.Misc.Forums.Domain.ForumSearchType.TopicTitlesOnly"] = "Topic titles only",
+            ["Enums.Nop.Plugin.Misc.Forums.Domain.ForumTopicType.Announcement"] = "Announcement",
+            ["Enums.Nop.Plugin.Misc.Forums.Domain.ForumTopicType.Normal"] = "Normal",
+            ["Enums.Nop.Plugin.Misc.Forums.Domain.ForumTopicType.Sticky"] = "Sticky",
 
             ["Plugins.Misc.Forums.Account.Forum"] = "Forum",
             ["Plugins.Misc.Forums.Account.ForumSubscriptions"] = "Forum subscriptions",
@@ -212,7 +211,6 @@ public class ForumsInstallService
             ["Plugins.Misc.Forums.DeleteTopic"] = "Delete Topic",
             ["Plugins.Misc.Forums.EditPost"] = "Edit Post",
             ["Plugins.Misc.Forums.EditTopic"] = "Edit Topic",
-            ["Plugins.Misc.Forums.Forum"] = "Forum",
             ["Plugins.Misc.Forums.ForumFeedDescription"] = "Forum's topics with newest posts.",
             ["Plugins.Misc.Forums.ForumFeedTitle"] = "{0} - Forum: {1}",
             ["Plugins.Misc.Forums.ForumName"] = "Forum Name",
@@ -333,9 +331,8 @@ public class ForumsInstallService
             ["Security.Permission.Forums.Manage"] = "Admin area. Forums. Create, edit, delete",
             ["Security.Permission.Forums.View"] = "Admin area. Forums. View",
 
-            ["Profile.LatestPosts"] = "Latest Posts",
-            ["Profile.LatestPosts.NoPosts"] = "No posts found",
-
+            ["Plugins.Misc.Forums.Profile.LatestPosts"] = "Latest Posts",
+            ["Plugins.Misc.Forums.Profile.LatestPosts.NoPosts"] = "No posts found",
         });
     }
 
@@ -508,10 +505,10 @@ public class ForumsInstallService
     }
 
     /// <summary>
-    /// Confugure moderator role
+    /// Configure moderator role
     /// </summary>
     /// <returns>A task that represents the asynchronous operation</returns>
-    private async Task ConfugureModeratorRoleAsync()
+    private async Task ConfigureModeratorRoleAsync()
     {
         var moderatorRole = await _customerService.GetCustomerRoleBySystemNameAsync(ForumDefaults.ForumModeratorsRoleName);
 
@@ -534,7 +531,7 @@ public class ForumsInstallService
             var customers = await _customerService.GetAllCustomersAsync(customerRoleIds: [adminRole.Id]);
 
             foreach (var customer in customers)
-                await _customerService.AddCustomerRoleMappingAsync(new CustomerCustomerRoleMapping { CustomerRoleId = moderatorRole.Id, CustomerId = customer.Id });
+                await _customerService.AddCustomerRoleMappingAsync(new() { CustomerRoleId = moderatorRole.Id, CustomerId = customer.Id });
         }
     }
 
@@ -548,7 +545,7 @@ public class ForumsInstallService
     /// <returns>A task that represents the asynchronous operation</returns>
     public async Task InstallRequiredDataAsync()
     {
-        await ConfugureModeratorRoleAsync();
+        await ConfigureModeratorRoleAsync();
 
         await InsertSettingsAsync();
 
@@ -571,6 +568,7 @@ public class ForumsInstallService
         await _settingService.DeleteSettingAsync<ForumSettings>();
 
         //locales
+        await _localizationService.DeleteLocaleResourcesAsync("Enums.Nop.Plugin.Misc.Forums.Domain.");
         await _localizationService.DeleteLocaleResourcesAsync("Plugins.Misc.Forums.");
         await _localizationService.DeleteLocaleResourcesAsync("Security.Permission.Forums.");
         await _localizationService.DeleteLocaleResourcesAsync("Admin.ContentManagement.MessageTemplates.Description.Forums.");
@@ -591,8 +589,7 @@ public class ForumsInstallService
         await _activityLogTypeRepository.DeleteAsync(at => at.SystemKeyword == ForumDefaults.ActivityLogTypeSystemNames.DeleteForumTopic);
 
         //permission
-        await _permissionRepository.DeleteAsync(record =>
-            record.SystemName == ForumDefaults.Permissions.FORUMS_VIEW
+        await _permissionRepository.DeleteAsync(record => record.SystemName == ForumDefaults.Permissions.FORUMS_VIEW
             || record.SystemName == ForumDefaults.Permissions.FORUMS_MANAGE);
 
     }
@@ -613,7 +610,7 @@ public class ForumsInstallService
 
         await _forumService.InsertForumGroupAsync(forumGroup);
 
-        await _forumService.InsertForumAsync(new Forum
+        await _forumService.InsertForumAsync(new()
         {
             ForumGroupId = forumGroup.Id,
             Name = "New Products",
@@ -627,7 +624,7 @@ public class ForumsInstallService
             UpdatedOnUtc = DateTime.UtcNow
         });
 
-        await _forumService.InsertForumAsync(new Forum
+        await _forumService.InsertForumAsync(new()
         {
             ForumGroupId = forumGroup.Id,
             Name = "Mobile Devices Forum",
@@ -641,7 +638,7 @@ public class ForumsInstallService
             UpdatedOnUtc = DateTime.UtcNow
         });
 
-        await _forumService.InsertForumAsync(new Forum
+        await _forumService.InsertForumAsync(new()
         {
             ForumGroupId = forumGroup.Id,
             Name = "Packaging & Shipping",

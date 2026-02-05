@@ -3,11 +3,9 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Forums.Public.Models;
 
-public record EditForumPostModel : BaseNopModel
+public record EditForumPostModel : BaseNopEntityModel
 {
     #region Properties
-
-    public int Id { get; set; }
 
     public int ForumTopicId { get; set; }
 

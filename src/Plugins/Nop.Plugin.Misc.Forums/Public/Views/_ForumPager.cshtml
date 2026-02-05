@@ -24,9 +24,9 @@
 else
 {
     @Html.RouteLink("1",
-                ForumDefaults.Routes.Public.TOPIC_SLUG_PAGED,
-                new { id = forumTopicId, pageNumber = 1, slug = forumTopicSlug },
-                new { title = string.Format(await localizationService.GetResourceAsync("Pager.PageLinkTitle"), 1) })
+        ForumDefaults.Routes.Public.TOPIC_SLUG_PAGED,
+        new { id = forumTopicId, pageNumber = 1, slug = forumTopicSlug },
+        new { title = string.Format(await localizationService.GetResourceAsync("Pager.PageLinkTitle"), 1) })
 
     <span> ... </span>
 
@@ -43,4 +43,3 @@ else
         }
     }
 }
-

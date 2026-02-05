@@ -24,7 +24,7 @@ public class ProfileForumPostLinkViewComponent : NopViewComponent
 
     #region Methods
 
-    public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData)
+    public IViewComponentResult Invoke(string widgetZone, object additionalData)
     {
         if (!_forumSettings.ForumsEnabled || !widgetZone.Equals(PublicWidgetZones.ProfilePageInfoUserstats, StringComparison.OrdinalIgnoreCase))
             return Content("");

@@ -19,26 +19,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Public\Views\Components\ProfilePosts\**" />
-    <EmbeddedResource Remove="Public\Views\Components\ProfilePosts\**" />
-    <None Remove="Public\Views\Components\ProfilePosts\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove="Admin\Views\Configure.cshtml" />
     <None Remove="Admin\Views\CreateForum.cshtml" />
     <None Remove="Admin\Views\CreateForumGroup.cshtml" />
     <None Remove="Admin\Views\EditForum.cshtml" />
     <None Remove="Admin\Views\EditForumGroup.cshtml" />
     <None Remove="Admin\Views\List.cshtml" />
-    <None Remove="Admin\Views\_Configure.Comments.cshtml" />
     <None Remove="Admin\Views\_Configure.Common.cshtml" />
     <None Remove="Admin\Views\_Configure.Feeds.cshtml" />
     <None Remove="Admin\Views\_Configure.PageSizes.cshtml" />
     <None Remove="Admin\Views\_Configure.Permissions.cshtml" />
-    <None Remove="Admin\Views\_CreateOrUpdate.cshtml" />
-    <None Remove="Admin\Views\_CreateOrUpdate.Info.cshtml" />
-    <None Remove="Admin\Views\_CreateOrUpdate.Seo.cshtml" />
     <None Remove="Admin\Views\_CreateOrUpdateForum.cshtml" />
     <None Remove="Admin\Views\_CreateOrUpdateForumGroup.cshtml" />
     <None Remove="Admin\Views\_ViewImports.cshtml" />
@@ -70,7 +60,6 @@
     <None Remove="Public\Views\Forum.cshtml" />
     <None Remove="Public\Views\ForumGroup.cshtml" />
     <None Remove="Public\Views\Index.cshtml" />
-    <None Remove="Public\Views\List.cshtml" />
     <None Remove="Public\Views\PostCreate.cshtml" />
     <None Remove="Public\Views\PostEdit.cshtml" />
     <None Remove="Public\Views\ProfilePosts.cshtml" />
@@ -84,6 +73,7 @@
     <None Remove="Public\Views\_CreateUpdateTopic.cshtml" />
     <None Remove="Public\Views\_ForumGroup.cshtml" />
     <None Remove="Public\Views\_ForumHeader.cshtml" />
+    <None Remove="Public\Views\_ForumPager.cshtml" />
     <None Remove="Public\Views\_ForumPost.cshtml" />
     <None Remove="Public\Views\_MarkdownEditor.cshtml" />
     <None Remove="Public\Views\_SearchBox.cshtml" />
@@ -206,9 +196,6 @@
     <Content Include="Public\Views\CustomerForumSubscriptions.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Public\Views\ProfilePosts.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="Public\Views\_ForumPager.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -225,6 +212,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Public\Views\PostEdit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Public\Views\ProfilePosts.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Public\Views\Search.cshtml">
@@ -255,6 +245,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Public\Views\_ForumHeader.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Public\Views\_ForumPager.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Public\Views\_ForumPost.cshtml">

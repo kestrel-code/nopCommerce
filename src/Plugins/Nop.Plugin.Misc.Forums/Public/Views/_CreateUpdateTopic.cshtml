@@ -51,7 +51,7 @@
                 {
                     <div class="inputs">
                         <label asp-for="TopicTypeId">@T("Plugins.Misc.Forums.Priority"):</label>
-                        <select asp-for="TopicTypeId" asp-items="@(new SelectList(Model.TopicPriorities, "Value", "Text", Model.TopicTypeId))"></select>
+                        <select asp-for="TopicTypeId" asp-items="Model.TopicPriorities"></select>
                     </div>
                 }
                 @if (Model.IsCustomerAllowedToSubscribe)

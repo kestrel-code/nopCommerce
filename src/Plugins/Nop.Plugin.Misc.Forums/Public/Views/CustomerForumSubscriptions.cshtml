@@ -1,5 +1,5 @@
-﻿@using Nop.Web.Components
-@model CustomerForumSubscriptionsModel
+﻿@model CustomerForumSubscriptionsModel
+
 @{    
     Layout = "_ColumnsTwo";
 
@@ -11,7 +11,7 @@
 }
 @section left
 {
-    @await Component.InvokeAsync(typeof(CustomerNavigationViewComponent),new { selectedTabId = 90 })
+    @await Component.InvokeAsync(typeof(CustomerNavigationViewComponent), new { selectedTabId = ForumDefaults.ForumCustomerNavigationTab })
 }
 <div class="page account-page forum-subscriptions-page">
     <div class="page-title">

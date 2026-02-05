@@ -22,7 +22,7 @@ public class NopStartup : INopStartup
         services.AddScoped<Admin.Factories.ForumModelFactory>();
         services.AddScoped<Public.Factories.ForumModelFactory>();
         services.AddScoped<ForumService>();
-        services.AddScoped<ForumsInstallService>();
+        services.AddScoped<ForumInstallService>();
     }
 
     /// <summary>

@@ -2,7 +2,6 @@
 using Nop.Core.Caching;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Seo;
-using Nop.Core.Events;
 using Nop.Data;
 using Nop.Plugin.Misc.Forums.Domain;
 using Nop.Services.Common;
@@ -23,11 +22,10 @@ public class ForumService
 
     private readonly ForumSettings _forumSettings;
     private readonly ICustomerService _customerService;
-    private readonly IEventPublisher _eventPublisher;
-    private readonly IMessageTokenProvider _messageTokenProvider;
-    private readonly INopUrlHelper _nopUrlHelper;
     private readonly IGenericAttributeService _genericAttributeService;
     private readonly IHtmlFormatter _htmlFormatter;
+    private readonly IMessageTokenProvider _messageTokenProvider;
+    private readonly INopUrlHelper _nopUrlHelper;
     private readonly IRepository<Customer> _customerRepository;
     private readonly IRepository<Forum> _forumRepository;
     private readonly IRepository<ForumGroup> _forumGroupRepository;
@@ -38,6 +36,7 @@ public class ForumService
     private readonly IStaticCacheManager _staticCacheManager;
     private readonly IStoreContext _storeContext;
     private readonly IUrlRecordService _urlRecordService;
+    private readonly IWebHelper _webHelper;
     private readonly IWorkContext _workContext;
     private readonly IWorkflowMessageService _workflowMessageService;
     private readonly SeoSettings _seoSettings;
@@ -48,11 +47,10 @@ public class ForumService
 
     public ForumService(ForumSettings forumSettings,
         ICustomerService customerService,
-        IEventPublisher eventPublisher,
-        IMessageTokenProvider messageTokenProvider,
-        INopUrlHelper nopUrlHelper,
         IGenericAttributeService genericAttributeService,
         IHtmlFormatter htmlFormatter,
+        IMessageTokenProvider messageTokenProvider,
+        INopUrlHelper nopUrlHelper,
         IRepository<Customer> customerRepository,
         IRepository<Forum> forumRepository,
         IRepository<ForumGroup> forumGroupRepository,
@@ -63,17 +61,17 @@ public class ForumService
         IStaticCacheManager staticCacheManager,
         IStoreContext storeContext,
         IUrlRecordService urlRecordService,
+        IWebHelper webHelper,
         IWorkContext workContext,
         IWorkflowMessageService workflowMessageService,
         SeoSettings seoSettings)
     {
         _forumSettings = forumSettings;
         _customerService = customerService;
-        _eventPublisher = eventPublisher;
-        _messageTokenProvider = messageTokenProvider;
-        _nopUrlHelper = nopUrlHelper;
         _genericAttributeService = genericAttributeService;
         _htmlFormatter = htmlFormatter;
+        _messageTokenProvider = messageTokenProvider;
+        _nopUrlHelper = nopUrlHelper;
         _customerRepository = customerRepository;
         _forumRepository = forumRepository;
         _forumGroupRepository = forumGroupRepository;
@@ -84,6 +82,7 @@ public class ForumService
         _staticCacheManager = staticCacheManager;
         _storeContext = storeContext;
         _urlRecordService = urlRecordService;
+        _webHelper = webHelper;
         _workContext = workContext;
         _workflowMessageService = workflowMessageService;
         _seoSettings = seoSettings;
@@ -99,14 +98,12 @@ public class ForumService
     /// <param name="tokens">List of already added tokens</param>
     /// <param name="forum">Forum</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task AddForumTokensAsync(IList<Token> tokens, Forum forum)
+    private async Task AddForumTokensAsync(List<Token> tokens, Forum forum)
     {
-        var forumUrl = _nopUrlHelper.RouteUrl(ForumDefaults.Routes.Public.FORUM_SLUG, new { id = forum.Id, slug = await GetForumSeNameAsync(forum) });
-        tokens.Add(new Token("Forums.ForumURL", forumUrl, true));
-        tokens.Add(new Token("Forums.ForumName", forum.Name));
-
-        //event notification
-        await _eventPublisher.EntityTokensAddedAsync(forum, tokens);
+        var forumUrl = _nopUrlHelper
+            .RouteUrl(ForumDefaults.Routes.Public.FORUM_SLUG, new { id = forum.Id, slug = await GetForumSeNameAsync(forum) }, _webHelper.GetCurrentRequestProtocol());
+        tokens.Add(new("Forums.ForumURL", forumUrl, true));
+        tokens.Add(new("Forums.ForumName", forum.Name));
     }
 
     /// <summary>
@@ -117,21 +114,16 @@ public class ForumService
     /// <param name="friendlyForumTopicPageIndex">Friendly (starts with 1) forum topic page to use for URL generation</param>
     /// <param name="appendedPostIdentifierAnchor">Forum post identifier</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task AddForumTopicTokensAsync(IList<Token> tokens, ForumTopic forumTopic,
+    private async Task AddForumTopicTokensAsync(List<Token> tokens, ForumTopic forumTopic,
         int? friendlyForumTopicPageIndex = null, int? appendedPostIdentifierAnchor = null)
     {
-        string topicUrl;
-        if (friendlyForumTopicPageIndex.HasValue && friendlyForumTopicPageIndex.Value > 1)
-            topicUrl = _nopUrlHelper.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG_PAGED, new { id = forumTopic.Id, slug = await GetTopicSeNameAsync(forumTopic), pageNumber = friendlyForumTopicPageIndex.Value });
-        else
-            topicUrl = _nopUrlHelper.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = forumTopic.Id, slug = await GetTopicSeNameAsync(forumTopic) });
+        var topicUrl = friendlyForumTopicPageIndex.HasValue && friendlyForumTopicPageIndex.Value > 1
+            ? _nopUrlHelper.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG_PAGED, new { id = forumTopic.Id, slug = await GetTopicSeNameAsync(forumTopic), pageNumber = friendlyForumTopicPageIndex.Value }, _webHelper.GetCurrentRequestProtocol())
+            : _nopUrlHelper.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = forumTopic.Id, slug = await GetTopicSeNameAsync(forumTopic) }, _webHelper.GetCurrentRequestProtocol());
         if (appendedPostIdentifierAnchor.HasValue && appendedPostIdentifierAnchor.Value > 0)
             topicUrl = $"{topicUrl}#{appendedPostIdentifierAnchor.Value}";
-        tokens.Add(new Token("Forums.TopicURL", topicUrl, true));
-        tokens.Add(new Token("Forums.TopicName", forumTopic.Subject));
-
-        //event notification
-        await _eventPublisher.EntityTokensAddedAsync(forumTopic, tokens);
+        tokens.Add(new("Forums.TopicURL", topicUrl, true));
+        tokens.Add(new("Forums.TopicName", forumTopic.Subject));
     }
 
     /// <summary>
@@ -140,15 +132,12 @@ public class ForumService
     /// <param name="tokens">List of already added tokens</param>
     /// <param name="forumPost">Forum post</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task AddForumPostTokensAsync(IList<Token> tokens, ForumPost forumPost)
+    private async Task AddForumPostTokensAsync(List<Token> tokens, ForumPost forumPost)
     {
         var customer = await _customerService.GetCustomerByIdAsync(forumPost.CustomerId);
 
-        tokens.Add(new Token("Forums.PostAuthor", await _customerService.FormatUsernameAsync(customer)));
-        tokens.Add(new Token("Forums.PostBody", FormatPostText(forumPost), true));
-
-        //event notification
-        await _eventPublisher.EntityTokensAddedAsync(forumPost, tokens);
+        tokens.Add(new("Forums.PostAuthor", await _customerService.FormatUsernameAsync(customer)));
+        tokens.Add(new("Forums.PostBody", FormatPostText(forumPost), true));
     }
 
     /// <summary>
@@ -156,26 +145,25 @@ public class ForumService
     /// </summary>
     /// <param name="forumId">The forum identifier</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task UpdateForumStatsAsync(int forumId)
+    private async Task UpdateForumStatsAsync(int forumId)
     {
-        if (forumId == 0)
-            return;
-
         var forum = await GetForumByIdAsync(forumId);
         if (forum == null)
             return;
 
         //number of topics
-        var queryNumTopics = from ft in _forumTopicRepository.Table
-                             where ft.ForumId == forumId
-                             select ft.Id;
+        var queryNumTopics =
+            from ft in _forumTopicRepository.Table
+            where ft.ForumId == forumId
+            select ft.Id;
         var numTopics = await queryNumTopics.CountAsync();
 
         //number of posts
-        var queryNumPosts = from ft in _forumTopicRepository.Table
-                            join fp in _forumPostRepository.Table on ft.Id equals fp.TopicId
-                            where ft.ForumId == forumId
-                            select fp.Id;
+        var queryNumPosts =
+            from ft in _forumTopicRepository.Table
+            join fp in _forumPostRepository.Table on ft.Id equals fp.TopicId
+            where ft.ForumId == forumId
+            select fp.Id;
         var numPosts = await queryNumPosts.CountAsync();
 
         //last values
@@ -183,17 +171,18 @@ public class ForumService
         var lastPostId = 0;
         var lastPostCustomerId = 0;
         DateTime? lastPostTime = null;
-        var queryLastValues = from ft in _forumTopicRepository.Table
-                              join fp in _forumPostRepository.Table on ft.Id equals fp.TopicId
-                              where ft.ForumId == forumId
-                              orderby fp.CreatedOnUtc descending, ft.CreatedOnUtc descending
-                              select new
-                              {
-                                  LastTopicId = ft.Id,
-                                  LastPostId = fp.Id,
-                                  LastPostCustomerId = fp.CustomerId,
-                                  LastPostTime = fp.CreatedOnUtc
-                              };
+        var queryLastValues =
+            from ft in _forumTopicRepository.Table
+            join fp in _forumPostRepository.Table on ft.Id equals fp.TopicId
+            where ft.ForumId == forumId
+            orderby fp.CreatedOnUtc descending, ft.CreatedOnUtc descending
+            select new
+            {
+                LastTopicId = ft.Id,
+                LastPostId = fp.Id,
+                LastPostCustomerId = fp.CustomerId,
+                LastPostTime = fp.CreatedOnUtc
+            };
         var lastValues = await queryLastValues.FirstOrDefaultAsync();
         if (lastValues != null)
         {
@@ -218,34 +207,33 @@ public class ForumService
     /// </summary>
     /// <param name="forumTopicId">The forum topic identifier</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task UpdateForumTopicStatsAsync(int forumTopicId)
+    private async Task UpdateForumTopicStatsAsync(int forumTopicId)
     {
-        if (forumTopicId == 0)
-            return;
-
         var forumTopic = await GetTopicByIdAsync(forumTopicId);
         if (forumTopic == null)
             return;
 
         //number of posts
-        var queryNumPosts = from fp in _forumPostRepository.Table
-                            where fp.TopicId == forumTopicId
-                            select fp.Id;
+        var queryNumPosts =
+            from fp in _forumPostRepository.Table
+            where fp.TopicId == forumTopicId
+            select fp.Id;
         var numPosts = await queryNumPosts.CountAsync();
 
         //last values
         var lastPostId = 0;
         var lastPostCustomerId = 0;
         DateTime? lastPostTime = null;
-        var queryLastValues = from fp in _forumPostRepository.Table
-                              where fp.TopicId == forumTopicId
-                              orderby fp.CreatedOnUtc descending
-                              select new
-                              {
-                                  LastPostId = fp.Id,
-                                  LastPostCustomerId = fp.CustomerId,
-                                  LastPostTime = fp.CreatedOnUtc
-                              };
+        var queryLastValues =
+            from fp in _forumPostRepository.Table
+            where fp.TopicId == forumTopicId
+            orderby fp.CreatedOnUtc descending
+            select new
+            {
+                LastPostId = fp.Id,
+                LastPostCustomerId = fp.CustomerId,
+                LastPostTime = fp.CreatedOnUtc
+            };
         var lastValues = await queryLastValues.FirstOrDefaultAsync();
         if (lastValues != null)
         {
@@ -268,19 +256,16 @@ public class ForumService
     /// </summary>
     /// <param name="customerId">The customer identifier</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task UpdateCustomerStatsAsync(int customerId)
+    private async Task UpdateCustomerStatsAsync(int customerId)
     {
-        if (customerId == 0)
-            return;
-
         var customer = await _customerService.GetCustomerByIdAsync(customerId);
-
         if (customer == null)
             return;
 
-        var query = from fp in _forumPostRepository.Table
-                    where fp.CustomerId == customerId
-                    select fp.Id;
+        var query =
+            from fp in _forumPostRepository.Table
+            where fp.CustomerId == customerId
+            select fp.Id;
         var numPosts = await query.CountAsync();
 
         await _genericAttributeService.SaveAttributeAsync(customer, ForumDefaults.ForumPostCountAttribute, numPosts);
@@ -295,10 +280,9 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the forum Topic
     /// </returns>
-    protected virtual async Task<ForumTopic> GetTopicByIdAsync(int forumTopicId, bool increaseViews)
+    private async Task<ForumTopic> GetTopicByIdAsync(int forumTopicId, bool increaseViews)
     {
         var forumTopic = await _forumTopicRepository.GetByIdAsync(forumTopicId, cache => default);
-
         if (forumTopic == null)
             return null;
 
@@ -322,7 +306,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the queued email identifier
     /// </returns>
-    protected virtual async Task<IList<int>> SendNewForumTopicMessageAsync(Customer customer, ForumTopic forumTopic, Forum forum, int languageId)
+    private async Task<IList<int>> SendNewForumTopicMessageAsync(Customer customer, ForumTopic forumTopic, Forum forum, int languageId)
     {
         ArgumentNullException.ThrowIfNull(customer);
 
@@ -346,16 +330,12 @@ public class ForumService
             var tokens = new List<Token>(commonTokens);
             await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount, languageId);
 
-            //event notification
-            await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
-
             var toEmail = customer.Email;
             var toName = await _customerService.GetCustomerFullNameAsync(customer);
 
             return await _workflowMessageService.SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
         }).ToListAsync();
     }
-
 
     #endregion
 
@@ -366,7 +346,7 @@ public class ForumService
     /// </summary>
     /// <param name="forumGroup">Forum group</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task DeleteForumGroupAsync(ForumGroup forumGroup)
+    public async Task DeleteForumGroupAsync(ForumGroup forumGroup)
     {
         await _forumGroupRepository.DeleteAsync(forumGroup);
     }
@@ -379,7 +359,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the forum group
     /// </returns>
-    public virtual async Task<ForumGroup> GetForumGroupByIdAsync(int forumGroupId)
+    public async Task<ForumGroup> GetForumGroupByIdAsync(int forumGroupId)
     {
         return await _forumGroupRepository.GetByIdAsync(forumGroupId, cache => default);
     }
@@ -391,7 +371,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the forum groups
     /// </returns>
-    public virtual async Task<IList<ForumGroup>> GetAllForumGroupsAsync()
+    public async Task<IList<ForumGroup>> GetAllForumGroupsAsync()
     {
         return await _forumGroupRepository.GetAllAsync(query =>
         {
@@ -406,7 +386,7 @@ public class ForumService
     /// </summary>
     /// <param name="forumGroup">Forum group</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task InsertForumGroupAsync(ForumGroup forumGroup)
+    public async Task InsertForumGroupAsync(ForumGroup forumGroup)
     {
         await _forumGroupRepository.InsertAsync(forumGroup);
     }
@@ -416,7 +396,7 @@ public class ForumService
     /// </summary>
     /// <param name="forumGroup">Forum group</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task UpdateForumGroupAsync(ForumGroup forumGroup)
+    public async Task UpdateForumGroupAsync(ForumGroup forumGroup)
     {
         await _forumGroupRepository.UpdateAsync(forumGroup);
     }
@@ -426,24 +406,27 @@ public class ForumService
     /// </summary>
     /// <param name="forum">Forum</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task DeleteForumAsync(Forum forum)
+    public async Task DeleteForumAsync(Forum forum)
     {
         ArgumentNullException.ThrowIfNull(forum);
 
         //delete forum subscriptions (topics)
-        var queryTopicIds = from ft in _forumTopicRepository.Table
-                            where ft.ForumId == forum.Id
-                            select ft.Id;
-        var queryFs1 = from fs in _forumSubscriptionRepository.Table
-                       where queryTopicIds.Contains(fs.TopicId)
-                       select fs;
+        var queryTopicIds =
+            from ft in _forumTopicRepository.Table
+            where ft.ForumId == forum.Id
+            select ft.Id;
+        var queryFs1 =
+            from fs in _forumSubscriptionRepository.Table
+            where queryTopicIds.Contains(fs.TopicId)
+            select fs;
 
         await _forumSubscriptionRepository.DeleteAsync(await queryFs1.ToListAsync());
 
         //delete forum subscriptions (forum)
-        var queryFs2 = from fs in _forumSubscriptionRepository.Table
-                       where fs.ForumId == forum.Id
-                       select fs;
+        var queryFs2 =
+            from fs in _forumSubscriptionRepository.Table
+            where fs.ForumId == forum.Id
+            select fs;
 
         await _forumSubscriptionRepository.DeleteAsync(await queryFs2.ToListAsync());
 
@@ -459,7 +442,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the forum
     /// </returns>
-    public virtual async Task<Forum> GetForumByIdAsync(int forumId)
+    public async Task<Forum> GetForumByIdAsync(int forumId)
     {
         return await _forumRepository.GetByIdAsync(forumId, cache => default);
     }
@@ -472,7 +455,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the forums
     /// </returns>
-    public virtual async Task<IList<Forum>> GetAllForumsByGroupIdAsync(int forumGroupId)
+    public async Task<IList<Forum>> GetAllForumsByGroupIdAsync(int forumGroupId)
     {
         var forums = await _forumRepository.GetAllAsync(query =>
         {
@@ -490,7 +473,7 @@ public class ForumService
     /// </summary>
     /// <param name="forum">Forum</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task InsertForumAsync(Forum forum)
+    public async Task InsertForumAsync(Forum forum)
     {
         await _forumRepository.InsertAsync(forum);
     }
@@ -500,7 +483,7 @@ public class ForumService
     /// </summary>
     /// <param name="forum">Forum</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task UpdateForumAsync(Forum forum)
+    public async Task UpdateForumAsync(Forum forum)
     {
         // if the forum group is changed then clear cache for the previous group 
         // (we can't use the event consumer because it will work after saving the changes in DB)
@@ -516,7 +499,7 @@ public class ForumService
     /// </summary>
     /// <param name="forumTopic">Forum topic</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task DeleteTopicAsync(ForumTopic forumTopic)
+    public async Task DeleteTopicAsync(ForumTopic forumTopic)
     {
         ArgumentNullException.ThrowIfNull(forumTopic);
 
@@ -527,9 +510,10 @@ public class ForumService
         await _forumTopicRepository.DeleteAsync(forumTopic);
 
         //delete forum subscriptions
-        var queryFs = from ft in _forumSubscriptionRepository.Table
-                      where ft.TopicId == forumTopic.Id
-                      select ft;
+        var queryFs =
+            from ft in _forumSubscriptionRepository.Table
+            where ft.TopicId == forumTopic.Id
+            select ft;
         var forumSubscriptions = await queryFs.ToListAsync();
 
         await _forumSubscriptionRepository.DeleteAsync(forumSubscriptions);
@@ -545,9 +529,9 @@ public class ForumService
     /// <param name="forumTopicId">The forum topic identifier</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the forum Topic
+    /// The task result contains the forum topic
     /// </returns>
-    public virtual async Task<ForumTopic> GetTopicByIdAsync(int forumTopicId)
+    public async Task<ForumTopic> GetTopicByIdAsync(int forumTopicId)
     {
         return await GetTopicByIdAsync(forumTopicId, false);
     }
@@ -564,9 +548,9 @@ public class ForumService
     /// <param name="pageSize">Page size</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the forum Topics
+    /// The task result contains the forum topics
     /// </returns>
-    public virtual async Task<IPagedList<ForumTopic>> GetAllTopicsAsync(int forumId = 0,
+    public async Task<IPagedList<ForumTopic>> GetAllTopicsAsync(int forumId = 0,
         int customerId = 0, string keywords = "", ForumSearchType searchType = ForumSearchType.All,
         int limitDays = 0, int pageIndex = 0, int pageSize = int.MaxValue)
     {
@@ -580,21 +564,23 @@ public class ForumService
 
         var topics = await _forumTopicRepository.GetAllPagedAsync(query =>
         {
-            var query1 = from ft in query
-                         join fp in _forumPostRepository.Table on ft.Id equals fp.TopicId
-                         where
-                             (forumId == 0 || ft.ForumId == forumId) &&
-                             (customerId == 0 || ft.CustomerId == customerId) &&
-                             (!searchKeywords ||
-                              (searchTopicTitles && ft.Subject.Contains(keywords)) ||
-                              (searchPostText && fp.Text.Contains(keywords))) &&
-                             (!limitDate.HasValue || limitDate.Value <= ft.LastPostTime)
-                         select ft.Id;
+            var query1 =
+                from ft in query
+                join fp in _forumPostRepository.Table on ft.Id equals fp.TopicId
+                where
+                    (forumId == 0 || ft.ForumId == forumId) &&
+                    (customerId == 0 || ft.CustomerId == customerId) &&
+                    (!searchKeywords ||
+                     (searchTopicTitles && ft.Subject.Contains(keywords)) ||
+                     (searchPostText && fp.Text.Contains(keywords))) &&
+                    (!limitDate.HasValue || limitDate.Value <= ft.LastPostTime)
+                select ft.Id;
 
-            var query2 = from ft in query
-                         where query1.Contains(ft.Id)
-                         orderby ft.TopicTypeId descending, ft.LastPostTime descending, ft.Id descending
-                         select ft;
+            var query2 =
+                from ft in query
+                where query1.Contains(ft.Id)
+                orderby ft.TopicTypeId descending, ft.LastPostTime descending, ft.Id descending
+                select ft;
 
             return query2;
         }, pageIndex, pageSize);
@@ -610,21 +596,23 @@ public class ForumService
     /// <param name="pageSize">Page size</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the forum Topics
+    /// The task result contains the forum topics
     /// </returns>
-    public virtual async Task<IPagedList<ForumTopic>> GetActiveTopicsAsync(int forumId = 0,
+    public async Task<IPagedList<ForumTopic>> GetActiveTopicsAsync(int forumId = 0,
         int pageIndex = 0, int pageSize = int.MaxValue)
     {
-        var query1 = from ft in _forumTopicRepository.Table
-                     where
-                         (forumId == 0 || ft.ForumId == forumId) &&
-                         ft.LastPostTime.HasValue
-                     select ft.Id;
+        var query1 =
+            from ft in _forumTopicRepository.Table
+            where
+                (forumId == 0 || ft.ForumId == forumId) &&
+                ft.LastPostTime.HasValue
+            select ft.Id;
 
-        var query2 = from ft in _forumTopicRepository.Table
-                     where query1.Contains(ft.Id)
-                     orderby ft.LastPostTime descending
-                     select ft;
+        var query2 =
+            from ft in _forumTopicRepository.Table
+            where query1.Contains(ft.Id)
+            orderby ft.LastPostTime descending
+            select ft;
 
         var topics = await query2.ToPagedListAsync(pageIndex, pageSize);
 
@@ -635,17 +623,13 @@ public class ForumService
     /// Inserts a forum topic
     /// </summary>
     /// <param name="forumTopic">Forum topic</param>
-    /// <param name="sendNotifications">A value indicating whether to send notifications to subscribed customers</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task InsertTopicAsync(ForumTopic forumTopic, bool sendNotifications)
+    public async Task InsertTopicAsync(ForumTopic forumTopic)
     {
         await _forumTopicRepository.InsertAsync(forumTopic);
 
         //update stats
         await UpdateForumStatsAsync(forumTopic.ForumId);
-
-        if (!sendNotifications)
-            return;
 
         //send notifications
         var forum = await GetForumByIdAsync(forumTopic.ForumId);
@@ -669,7 +653,7 @@ public class ForumService
     /// </summary>
     /// <param name="forumTopic">Forum topic</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task UpdateTopicAsync(ForumTopic forumTopic)
+    public async Task UpdateTopicAsync(ForumTopic forumTopic)
     {
         await _forumTopicRepository.UpdateAsync(forumTopic);
     }
@@ -683,7 +667,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the moved forum topic
     /// </returns>
-    public virtual async Task<ForumTopic> MoveTopicAsync(int forumTopicId, int newForumId)
+    public async Task<ForumTopic> MoveTopicAsync(int forumTopicId, int newForumId)
     {
         var forumTopic = await GetTopicByIdAsync(forumTopicId);
         if (forumTopic == null)
@@ -716,7 +700,7 @@ public class ForumService
     /// </summary>
     /// <param name="forumPost">Forum post</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task DeletePostAsync(ForumPost forumPost)
+    public async Task DeletePostAsync(ForumPost forumPost)
     {
         ArgumentNullException.ThrowIfNull(forumPost);
 
@@ -752,9 +736,9 @@ public class ForumService
     /// <param name="forumPostId">The forum post identifier</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the forum Post
+    /// The task result contains the forum post
     /// </returns>
-    public virtual async Task<ForumPost> GetPostByIdAsync(int forumPostId)
+    public async Task<ForumPost> GetPostByIdAsync(int forumPostId)
     {
         return await _forumPostRepository.GetByIdAsync(forumPostId, cache => default, useShortTermCache: true);
     }
@@ -771,12 +755,11 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the posts
     /// </returns>
-    public virtual async Task<IPagedList<ForumPost>> GetAllPostsAsync(int forumTopicId = 0,
+    public async Task<IPagedList<ForumPost>> GetAllPostsAsync(int forumTopicId = 0,
         int customerId = 0, string keywords = "",
         int pageIndex = 0, int pageSize = int.MaxValue)
     {
-        return await GetAllPostsAsync(forumTopicId, customerId, keywords, true,
-            pageIndex, pageSize);
+        return await GetAllPostsAsync(forumTopicId, customerId, keywords, true, pageIndex, pageSize);
     }
 
     /// <summary>
@@ -790,9 +773,9 @@ public class ForumService
     /// <param name="pageSize">Page size</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the forum Posts
+    /// The task result contains the forum posts
     /// </returns>
-    public virtual async Task<IPagedList<ForumPost>> GetAllPostsAsync(int forumTopicId = 0, int customerId = 0,
+    public async Task<IPagedList<ForumPost>> GetAllPostsAsync(int forumTopicId = 0, int customerId = 0,
         string keywords = "", bool ascSort = false,
         int pageIndex = 0, int pageSize = int.MaxValue)
     {
@@ -823,7 +806,7 @@ public class ForumService
     /// <param name="forumPost">The forum post</param>
     /// <param name="sendNotifications">A value indicating whether to send notifications to subscribed customers</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task InsertPostAsync(ForumPost forumPost, bool sendNotifications)
+    public async Task InsertPostAsync(ForumPost forumPost, bool sendNotifications)
     {
         await _forumPostRepository.InsertAsync(forumPost);
 
@@ -866,7 +849,7 @@ public class ForumService
     /// </summary>
     /// <param name="forumPost">Forum post</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task UpdatePostAsync(ForumPost forumPost)
+    public async Task UpdatePostAsync(ForumPost forumPost)
     {
         await _forumPostRepository.UpdateAsync(forumPost);
     }
@@ -876,7 +859,7 @@ public class ForumService
     /// </summary>
     /// <param name="forumSubscription">Forum subscription</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task DeleteSubscriptionAsync(ForumSubscription forumSubscription)
+    public async Task DeleteSubscriptionAsync(ForumSubscription forumSubscription)
     {
         await _forumSubscriptionRepository.DeleteAsync(forumSubscription);
     }
@@ -889,7 +872,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the forum subscription
     /// </returns>
-    public virtual async Task<ForumSubscription> GetSubscriptionByIdAsync(int forumSubscriptionId)
+    public async Task<ForumSubscription> GetSubscriptionByIdAsync(int forumSubscriptionId)
     {
         return await _forumSubscriptionRepository.GetByIdAsync(forumSubscriptionId, cache => default, useShortTermCache: true);
     }
@@ -906,25 +889,27 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the forum subscriptions
     /// </returns>
-    public virtual async Task<IPagedList<ForumSubscription>> GetAllSubscriptionsAsync(int customerId = 0, int forumId = 0,
+    public async Task<IPagedList<ForumSubscription>> GetAllSubscriptionsAsync(int customerId = 0, int forumId = 0,
         int topicId = 0, int pageIndex = 0, int pageSize = int.MaxValue)
     {
         var forumSubscriptions = await _forumSubscriptionRepository.GetAllPagedAsync(query =>
         {
-            var fsQuery = from fs in query
-                          join c in _customerRepository.Table on fs.CustomerId equals c.Id
-                          where
-                              (customerId == 0 || fs.CustomerId == customerId) &&
-                              (forumId == 0 || fs.ForumId == forumId) &&
-                              (topicId == 0 || fs.TopicId == topicId) &&
-                              c.Active &&
-                              !c.Deleted
-                          select fs.SubscriptionGuid;
+            var fsQuery =
+                from fs in query
+                join c in _customerRepository.Table on fs.CustomerId equals c.Id
+                where
+                    (customerId == 0 || fs.CustomerId == customerId) &&
+                    (forumId == 0 || fs.ForumId == forumId) &&
+                    (topicId == 0 || fs.TopicId == topicId) &&
+                    c.Active &&
+                    !c.Deleted
+                select fs.SubscriptionGuid;
 
-            var rez = from fs in query
-                      where fsQuery.Contains(fs.SubscriptionGuid)
-                      orderby fs.CreatedOnUtc descending, fs.SubscriptionGuid descending
-                      select fs;
+            var rez =
+                from fs in query
+                where fsQuery.Contains(fs.SubscriptionGuid)
+                orderby fs.CreatedOnUtc descending, fs.SubscriptionGuid descending
+                select fs;
 
             return rez;
         }, pageIndex, pageSize);
@@ -937,7 +922,7 @@ public class ForumService
     /// </summary>
     /// <param name="forumSubscription">Forum subscription</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task InsertSubscriptionAsync(ForumSubscription forumSubscription)
+    public async Task InsertSubscriptionAsync(ForumSubscription forumSubscription)
     {
         await _forumSubscriptionRepository.InsertAsync(forumSubscription);
     }
@@ -951,7 +936,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains true if allowed, otherwise false
     /// </returns>
-    public virtual async Task<bool> IsCustomerAllowedToCreateTopicAsync(Customer customer, Forum forum)
+    public async Task<bool> IsCustomerAllowedToCreateTopicAsync(Customer customer, Forum forum)
     {
         if (forum == null)
             return false;
@@ -974,7 +959,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains true if allowed, otherwise false
     /// </returns>
-    public virtual async Task<bool> IsCustomerAllowedToEditTopicAsync(Customer customer, ForumTopic topic)
+    public async Task<bool> IsCustomerAllowedToEditTopicAsync(Customer customer, ForumTopic topic)
     {
         if (topic == null)
             return false;
@@ -1005,7 +990,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains true if allowed, otherwise false
     /// </returns>
-    public virtual async Task<bool> IsCustomerAllowedToMoveTopicAsync(Customer customer, ForumTopic topic)
+    public async Task<bool> IsCustomerAllowedToMoveTopicAsync(Customer customer, ForumTopic topic)
     {
         if (topic == null)
             return false;
@@ -1028,7 +1013,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains true if allowed, otherwise false
     /// </returns>
-    public virtual async Task<bool> IsCustomerAllowedToDeleteTopicAsync(Customer customer, ForumTopic topic)
+    public async Task<bool> IsCustomerAllowedToDeleteTopicAsync(Customer customer, ForumTopic topic)
     {
         if (topic == null)
             return false;
@@ -1059,7 +1044,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains true if allowed, otherwise false
     /// </returns>
-    public virtual async Task<bool> IsCustomerAllowedToCreatePostAsync(Customer customer, ForumTopic topic)
+    public async Task<bool> IsCustomerAllowedToCreatePostAsync(Customer customer, ForumTopic topic)
     {
         if (topic == null)
             return false;
@@ -1077,12 +1062,12 @@ public class ForumService
     /// Check whether customer is allowed to edit post
     /// </summary>
     /// <param name="customer">Customer</param>
-    /// <param name="post">Topic</param>
+    /// <param name="post">Post</param>
     /// <returns>
     /// A task that represents the asynchronous operation
     /// The task result contains true if allowed, otherwise false
     /// </returns>
-    public virtual async Task<bool> IsCustomerAllowedToEditPostAsync(Customer customer, ForumPost post)
+    public async Task<bool> IsCustomerAllowedToEditPostAsync(Customer customer, ForumPost post)
     {
         if (post == null)
             return false;
@@ -1108,12 +1093,12 @@ public class ForumService
     /// Check whether customer is allowed to delete post
     /// </summary>
     /// <param name="customer">Customer</param>
-    /// <param name="post">Topic</param>
+    /// <param name="post">Post</param>
     /// <returns>
     /// A task that represents the asynchronous operation
     /// The task result contains true if allowed, otherwise false
     /// </returns>
-    public virtual async Task<bool> IsCustomerAllowedToDeletePostAsync(Customer customer, ForumPost post)
+    public async Task<bool> IsCustomerAllowedToDeletePostAsync(Customer customer, ForumPost post)
     {
         if (post == null)
             return false;
@@ -1143,7 +1128,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains true if allowed, otherwise false
     /// </returns>
-    public virtual async Task<bool> IsCustomerAllowedToSetTopicPriorityAsync(Customer customer)
+    public async Task<bool> IsCustomerAllowedToSetTopicPriorityAsync(Customer customer)
     {
         if (customer == null)
             return false;
@@ -1162,7 +1147,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains true if allowed, otherwise false
     /// </returns>
-    public virtual async Task<bool> IsCustomerAllowedToSubscribeAsync(Customer customer)
+    public async Task<bool> IsCustomerAllowedToSubscribeAsync(Customer customer)
     {
         if (customer == null)
             return false;
@@ -1177,14 +1162,13 @@ public class ForumService
     /// Gets a value indicating whether customer is a forum moderator
     /// </summary>
     /// <param name="customer">Customer</param>
-    /// <param name="onlyActiveCustomerRoles">A value indicating whether we should look only in active customer roles</param>
     /// <returns>
     /// A task that represents the asynchronous operation
     /// The task result contains the result
     /// </returns>
-    public virtual async Task<bool> IsForumModeratorAsync(Customer customer, bool onlyActiveCustomerRoles = true)
+    public async Task<bool> IsForumModeratorAsync(Customer customer)
     {
-        return await _customerService.IsInCustomerRoleAsync(customer, ForumDefaults.ForumModeratorsRoleName, onlyActiveCustomerRoles);
+        return await _customerService.IsInCustomerRoleAsync(customer, ForumDefaults.ForumModeratorsRoleName);
     }
 
     /// <summary>
@@ -1197,7 +1181,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the page index
     /// </returns>
-    public virtual async Task<int> CalculateTopicPageIndexAsync(int forumTopicId, int pageSize, int postId)
+    public async Task<int> CalculateTopicPageIndexAsync(int forumTopicId, int pageSize, int postId)
     {
         var pageIndex = 0;
         var forumPosts = await GetAllPostsAsync(forumTopicId, ascSort: true);
@@ -1223,7 +1207,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the post vote
     /// </returns>
-    public virtual async Task<ForumPostVote> GetPostVoteAsync(int postId, Customer customer)
+    public async Task<ForumPostVote> GetPostVoteAsync(int postId, Customer customer)
     {
         if (customer == null)
             return null;
@@ -1241,7 +1225,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the post votes count
     /// </returns>
-    public virtual async Task<int> GetNumberOfPostVotesAsync(Customer customer, DateTime createdFromUtc)
+    public async Task<int> GetNumberOfPostVotesAsync(Customer customer, DateTime createdFromUtc)
     {
         if (customer == null)
             return 0;
@@ -1255,7 +1239,7 @@ public class ForumService
     /// </summary>
     /// <param name="postVote">Post vote</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task InsertPostVoteAsync(ForumPostVote postVote)
+    public async Task InsertPostVoteAsync(ForumPostVote postVote)
     {
         await _forumPostVoteRepository.InsertAsync(postVote);
 
@@ -1271,7 +1255,7 @@ public class ForumService
     /// </summary>
     /// <param name="postVote">Post vote</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task DeletePostVoteAsync(ForumPostVote postVote)
+    public async Task DeletePostVoteAsync(ForumPostVote postVote)
     {
         ArgumentNullException.ThrowIfNull(postVote);
 
@@ -1289,7 +1273,7 @@ public class ForumService
     /// </summary>
     /// <param name="forumPost">Forum post</param>
     /// <returns>Formatted text</returns>
-    public virtual string FormatPostText(ForumPost forumPost)
+    public string FormatPostText(ForumPost forumPost)
     {
         var text = forumPost.Text;
 
@@ -1299,18 +1283,11 @@ public class ForumService
         switch (_forumSettings.ForumEditor)
         {
             case EditorType.SimpleTextBox:
-            {
                 text = _htmlFormatter.FormatText(text, false, true, false, false, false, false);
-            }
+                break;
 
-            break;
             case EditorType.BBCodeEditor:
-            {
                 text = _htmlFormatter.FormatText(text, false, true, false, true, false, false);
-            }
-
-            break;
-            default:
                 break;
         }
 
@@ -1322,7 +1299,7 @@ public class ForumService
     /// </summary>
     /// <param name="forumTopic">Forum topic</param>
     /// <returns>Formatted subject</returns>
-    public virtual string StripTopicSubject(ForumTopic forumTopic)
+    public string StripTopicSubject(ForumTopic forumTopic)
     {
         var subject = forumTopic.Subject;
         if (string.IsNullOrEmpty(subject))
@@ -1335,7 +1312,7 @@ public class ForumService
         if (subject.Length <= strippedTopicMaxLength)
             return subject;
 
-        var index = subject.IndexOf(" ", strippedTopicMaxLength, StringComparison.Ordinal);
+        var index = subject.IndexOf(' ', strippedTopicMaxLength);
 
         if (index <= 0)
             return subject;
@@ -1351,29 +1328,12 @@ public class ForumService
     /// </summary>
     /// <param name="text">Text</param>
     /// <returns>Formatted text</returns>
-    public virtual string FormatForumSignatureText(string text)
+    public string FormatForumSignatureText(string text)
     {
         if (string.IsNullOrEmpty(text))
             return string.Empty;
 
         text = _htmlFormatter.FormatText(text, false, true, false, false, false, false);
-        return text;
-    }
-
-    /// <summary>
-    /// Formats the private message text
-    /// </summary>
-    /// <param name="pm">Private message</param>
-    /// <returns>Formatted text</returns>
-    public virtual string FormatPrivateMessageText(PrivateMessage pm)
-    {
-        var text = pm.Text;
-
-        if (string.IsNullOrEmpty(text))
-            return string.Empty;
-
-        text = _htmlFormatter.FormatText(text, false, true, false, true, false, false);
-
         return text;
     }
 
@@ -1385,7 +1345,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the forum post
     /// </returns>
-    public virtual async Task<ForumPost> GetFirstPostAsync(ForumTopic forumTopic)
+    public async Task<ForumPost> GetFirstPostAsync(ForumTopic forumTopic)
     {
         ArgumentNullException.ThrowIfNull(forumTopic);
 
@@ -1397,52 +1357,55 @@ public class ForumService
     }
 
     /// <summary>
-    /// Gets ForumGroup SE (search engine) name
+    /// Gets forum group SE (search engine) name
     /// </summary>
-    /// <param name="forumGroup">ForumGroup</param>
+    /// <param name="forumGroup">Forum group</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the forumGroup SE (search engine) name
+    /// The task result contains the forum group SE (search engine) name
     /// </returns>
-    public virtual async Task<string> GetForumGroupSeNameAsync(ForumGroup forumGroup)
+    public async Task<string> GetForumGroupSeNameAsync(ForumGroup forumGroup)
     {
         ArgumentNullException.ThrowIfNull(forumGroup);
 
-        var seName = await _urlRecordService.GetSeNameAsync(forumGroup.Name, _seoSettings.ConvertNonWesternChars, _seoSettings.AllowUnicodeCharsInUrls);
+        var seName = await _urlRecordService
+            .GetSeNameAsync(forumGroup.Name, _seoSettings.ConvertNonWesternChars, _seoSettings.AllowUnicodeCharsInUrls);
 
         return seName;
     }
 
     /// <summary>
-    /// Gets Forum SE (search engine) name
+    /// Gets forum SE (search engine) name
     /// </summary>
     /// <param name="forum">Forum</param>
     /// <returns>
     /// A task that represents the asynchronous operation
     /// The task result contains the forum SE (search engine) name
     /// </returns>
-    public virtual async Task<string> GetForumSeNameAsync(Forum forum)
+    public async Task<string> GetForumSeNameAsync(Forum forum)
     {
         ArgumentNullException.ThrowIfNull(forum);
 
-        var seName = await _urlRecordService.GetSeNameAsync(forum.Name, _seoSettings.ConvertNonWesternChars, _seoSettings.AllowUnicodeCharsInUrls);
+        var seName = await _urlRecordService
+            .GetSeNameAsync(forum.Name, _seoSettings.ConvertNonWesternChars, _seoSettings.AllowUnicodeCharsInUrls);
 
         return seName;
     }
 
     /// <summary>
-    /// Gets ForumTopic SE (search engine) name
+    /// Gets forum topic SE (search engine) name
     /// </summary>
-    /// <param name="forumTopic">ForumTopic</param>
+    /// <param name="forumTopic">Forum topic</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the forumTopic SE (search engine) name
+    /// The task result contains the forum topic SE (search engine) name
     /// </returns>
-    public virtual async Task<string> GetTopicSeNameAsync(ForumTopic forumTopic)
+    public async Task<string> GetTopicSeNameAsync(ForumTopic forumTopic)
     {
         ArgumentNullException.ThrowIfNull(forumTopic);
 
-        var seName = await _urlRecordService.GetSeNameAsync(forumTopic.Subject, _seoSettings.ConvertNonWesternChars, _seoSettings.AllowUnicodeCharsInUrls);
+        var seName = await _urlRecordService
+            .GetSeNameAsync(forumTopic.Subject, _seoSettings.ConvertNonWesternChars, _seoSettings.AllowUnicodeCharsInUrls);
 
         // Trim SE name to avoid URLs that are too long
         var maxLength = ForumDefaults.ForumTopicLength;
@@ -1465,7 +1428,7 @@ public class ForumService
     /// A task that represents the asynchronous operation
     /// The task result contains the queued email identifier
     /// </returns>
-    public virtual async Task<IList<int>> SendNewForumPostMessageAsync(Customer customer, ForumPost forumPost, ForumTopic forumTopic,
+    public async Task<IList<int>> SendNewForumPostMessageAsync(Customer customer, ForumPost forumPost, ForumTopic forumTopic,
         Forum forum, int friendlyForumTopicPageIndex, int languageId)
     {
         ArgumentNullException.ThrowIfNull(customer);
@@ -1490,9 +1453,6 @@ public class ForumService
 
             var tokens = new List<Token>(commonTokens);
             await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount, languageId);
-
-            //event notification
-            await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
             var toEmail = customer.Email;
             var toName = await _customerService.GetCustomerFullNameAsync(customer);

@@ -3,11 +3,10 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Forums.Public.Models;
 
-public record ForumTopicPageModel : BaseNopModel
+public record ForumTopicPageModel : BaseNopEntityModel
 {
     #region Properties
 
-    public int Id { get; set; }
     public string Subject { get; set; }
     public string SeName { get; set; }
     public string WatchTopicText { get; set; }

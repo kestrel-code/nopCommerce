@@ -3,7 +3,7 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Forums.Public.Models;
 
-public record ForumAccountInfoModel : BaseNopModel
+public record ForumAccountInfoModel : BaseNopEntityModel
 {
     #region Properties
 

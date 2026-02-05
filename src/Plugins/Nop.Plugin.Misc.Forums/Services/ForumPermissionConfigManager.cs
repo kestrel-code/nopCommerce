@@ -4,9 +4,9 @@ using Nop.Services.Security;
 namespace Nop.Plugin.Misc.Forums.Services;
 
 /// <summary>
-/// Forums permission congiguration manager
+/// Forums permission configuration manager
 /// </summary>
-public class ForumsPermissionConfigManager : IPermissionConfigManager
+public class ForumPermissionConfigManager : IPermissionConfigManager
 {
     /// <summary>
     /// Gets all permission configurations

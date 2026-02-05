@@ -14,7 +14,7 @@
                                 <nop-label asp-for="ForumGroupId"/>
                             </div>
                             <div class="col-md-9">
-                                <nop-select asp-for="ForumGroupId" asp-items="@(new SelectList(Model.ForumGroups, "Id", "Name"))" asp-required="true" />
+                                <nop-select asp-for="ForumGroupId" asp-items="Model.ForumGroups" asp-required="true" />
                                 <span asp-validation-for="ForumGroupId"></span>
                             </div>
                         </div>

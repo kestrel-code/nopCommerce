@@ -15,7 +15,7 @@ public class ForumDefaults
     /// <summary>
     /// Represents system name of the "Forums" menu item in the admin area
     /// </summary>
-    public static string ForumsMenuSystemName => "Forums";
+    public static string ForumsMenuSystemName => "Manage forums";
 
     /// <summary>
     /// Gets a system name of 'forum moderators' customer role
@@ -260,7 +260,6 @@ public class ForumDefaults
             /// Gets the customer forum subscriptions route name
             /// </summary>
             public const string CUSTOMER_FORUM_SUBSCRIPTIONS = "CustomerForumSubscriptions";
-
 
             /// <summary>
             /// Gets the customer's forum posts route name

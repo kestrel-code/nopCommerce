@@ -6,10 +6,10 @@ using Nop.Plugin.Misc.Forums.Domain;
 
 namespace Nop.Plugin.Misc.Forums.Data.Migrations;
 
-[NopMigration("2025-03-06 00:00:00", "Misc.Forums schema", MigrationProcessType.Installation)]
+[NopMigration("2026-02-02 00:00:00", "Misc.Forums schema", MigrationProcessType.Installation)]
 public class SchemaMigration : Migration
 {
-    #region Utils
+    #region Utilities
 
     private void CreateIndexes()
     {

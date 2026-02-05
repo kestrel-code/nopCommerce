@@ -12,6 +12,7 @@ using Nop.Plugin.Misc.Forums.Domain;
 using Nop.Plugin.Misc.Forums.Public.Models;
 using Nop.Plugin.Misc.Forums.Public.Models.JsonLD;
 using Nop.Plugin.Misc.Forums.Services;
+using Nop.Services;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
@@ -19,7 +20,6 @@ using Nop.Services.Helpers;
 using Nop.Services.Html;
 using Nop.Services.Localization;
 using Nop.Services.Media;
-using Nop.Web.Factories;
 using Nop.Web.Framework.Extensions;
 using Nop.Web.Framework.Mvc.Routing;
 using Nop.Web.Infrastructure;
@@ -37,21 +37,20 @@ public class ForumModelFactory
 
     private readonly CaptchaSettings _captchaSettings;
     private readonly CustomerSettings _customerSettings;
+    private readonly ForumService _forumService;
     private readonly ForumSettings _forumSettings;
     private readonly IBBCodeHelper _bbCodeHelper;
     private readonly ICountryService _countryService;
     private readonly ICustomerService _customerService;
     private readonly IDateTimeHelper _dateTimeHelper;
-    private readonly ForumService _forumService;
     private readonly IGenericAttributeService _genericAttributeService;
-    private readonly IJsonLdModelFactory _jsonLdModelFactory;
     private readonly ILocalizationService _localizationService;
     private readonly INopUrlHelper _nopUrlHelper;
     private readonly IPictureService _pictureService;
+    private readonly IWebHelper _webHelper;
     private readonly IWorkContext _workContext;
     private readonly MediaSettings _mediaSettings;
     private readonly SeoSettings _seoSettings;
-    private readonly IWebHelper _webHelper;
 
     #endregion
 
@@ -59,72 +58,42 @@ public class ForumModelFactory
 
     public ForumModelFactory(CaptchaSettings captchaSettings,
         CustomerSettings customerSettings,
+        ForumService forumService,
         ForumSettings forumSettings,
         IBBCodeHelper bbCodeHelper,
         ICountryService countryService,
         ICustomerService customerService,
         IDateTimeHelper dateTimeHelper,
-        ForumService forumService,
         IGenericAttributeService genericAttributeService,
-        IJsonLdModelFactory jsonLdModelFactory,
         ILocalizationService localizationService,
         INopUrlHelper nopUrlHelper,
         IPictureService pictureService,
+        IWebHelper webHelper,
         IWorkContext workContext,
         MediaSettings mediaSettings,
-        SeoSettings seoSettings,
-        IWebHelper webHelper)
+        SeoSettings seoSettings)
     {
         _captchaSettings = captchaSettings;
         _customerSettings = customerSettings;
+        _forumService = forumService;
         _forumSettings = forumSettings;
         _bbCodeHelper = bbCodeHelper;
         _countryService = countryService;
         _customerService = customerService;
         _dateTimeHelper = dateTimeHelper;
-        _forumService = forumService;
         _genericAttributeService = genericAttributeService;
-        _jsonLdModelFactory = jsonLdModelFactory;
         _localizationService = localizationService;
         _nopUrlHelper = nopUrlHelper;
         _pictureService = pictureService;
+        _webHelper = webHelper;
         _workContext = workContext;
         _mediaSettings = mediaSettings;
         _seoSettings = seoSettings;
-        _webHelper = webHelper;
     }
 
     #endregion
 
     #region Utilities
-
-    /// <summary>
-    /// Get the list of forum topic types
-    /// </summary>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the collection of the select list item
-    /// </returns>
-    protected virtual async Task<List<SelectListItem>> ForumTopicTypesListAsync()
-    {
-        return new List<SelectListItem>
-        {
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Normal"),
-                Value = ((int)ForumTopicType.Normal).ToString()
-            },
-
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Sticky"),
-                Value = ((int)ForumTopicType.Sticky).ToString()
-            },
-
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Announcement"),
-                Value = ((int)ForumTopicType.Announcement).ToString()
-            }
-        };
-    }
 
     /// <summary>
     /// Get the list of forum groups
@@ -133,7 +102,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the collection of the select list item
     /// </returns>
-    protected virtual async Task<List<SelectListItem>> ForumGroupsForumsListAsync()
+    private async Task<List<SelectListItem>> ForumGroupsForumsListAsync()
     {
         var forumsList = new List<SelectListItem>();
         var separator = "--";
@@ -142,12 +111,12 @@ public class ForumModelFactory
         foreach (var fg in forumGroups)
         {
             // Add the forum group with Value of 0 so it won't be used as a target forum
-            forumsList.Add(new SelectListItem { Text = fg.Name, Value = "0" });
+            forumsList.Add(new() { Text = fg.Name, Value = "0" });
 
             var forums = await _forumService.GetAllForumsByGroupIdAsync(fg.Id);
             foreach (var f in forums)
             {
-                forumsList.Add(new SelectListItem { Text = $"{separator}{f.Name}", Value = f.Id.ToString() });
+                forumsList.Add(new() { Text = $"{separator}{f.Name}", Value = f.Id.ToString() });
             }
         }
 
@@ -164,7 +133,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains JSON-LD forum topic model
     /// </returns>
-    protected virtual async Task<JsonLdForumTopicModel> PrepareJsonLdForumTopicAsync(ForumTopic forumTopic, ForumPost firstPost, ForumTopicPageModel model)
+    private async Task<JsonLdForumTopicModel> PrepareJsonLdForumTopicAsync(ForumTopic forumTopic, ForumPost firstPost, ForumTopicPageModel model)
     {
         var forumTopicCustomer = await _customerService.GetCustomerByIdAsync(forumTopic.CustomerId);
         var customerName = await _customerService.FormatUsernameAsync(forumTopicCustomer);
@@ -175,15 +144,12 @@ public class ForumModelFactory
             Author = new()
             {
                 Name = JavaScriptEncoder.Default.Encode(customerName),
-                Url =
-                    _nopUrlHelper.RouteUrl(NopRouteNames.Standard.CUSTOMER_PROFILE, new { id = forumTopic.CustomerId },
-                        _webHelper.GetCurrentRequestProtocol()),
+                Url = _nopUrlHelper.RouteUrl(NopRouteNames.Standard.CUSTOMER_PROFILE, new { id = forumTopic.CustomerId }, _webHelper.GetCurrentRequestProtocol()),
             },
             DatePublished = new DateTimeOffset(createdOn).ToString("O", CultureInfo.InvariantCulture),
             Subject = JavaScriptEncoder.Default.Encode(model.Subject),
             Text = _forumService.FormatPostText(firstPost),
-            Url = _nopUrlHelper.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = model.Id, slug = model.SeName },
-                _webHelper.GetCurrentRequestProtocol()),
+            Url = _nopUrlHelper.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = model.Id, slug = model.SeName }, _webHelper.GetCurrentRequestProtocol()),
             Comments = model.ForumPostModels.Where(pm => pm.Id != firstPost.Id).Select(postModel =>
             {
                 var commentModel = new JsonLdForumTopicCommentModel
@@ -191,8 +157,7 @@ public class ForumModelFactory
                     Author = new()
                     {
                         Name = JavaScriptEncoder.Default.Encode(postModel.CustomerName),
-                        Url = _nopUrlHelper.RouteUrl(NopRouteNames.Standard.CUSTOMER_PROFILE, new { id = postModel.CustomerId },
-                            _webHelper.GetCurrentRequestProtocol()),
+                        Url = _nopUrlHelper.RouteUrl(NopRouteNames.Standard.CUSTOMER_PROFILE, new { id = postModel.CustomerId }, _webHelper.GetCurrentRequestProtocol()),
                     },
                     DatePublished = new DateTimeOffset(postModel.PostCreatedOn).ToString("O", CultureInfo.InvariantCulture),
                     Url = postModel.CurrentTopicPage > 1
@@ -205,10 +170,9 @@ public class ForumModelFactory
                 {
                     commentModel.InteractionStatistic = new()
                     {
-                        InteractionType =
-                            postModel.VoteCount >= 0
-                                ? "https://schema.org/LikeAction"
-                                : "https://schema.org/DislikeAction",
+                        InteractionType = postModel.VoteCount >= 0
+                            ? "https://schema.org/LikeAction"
+                            : "https://schema.org/DislikeAction",
                         UserInteractionCount = Math.Abs(postModel.VoteCount)
                     };
                 }
@@ -243,7 +207,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the forum group model
     /// </returns>
-    public virtual async Task<ForumGroupModel> PrepareForumGroupModelAsync(ForumGroup forumGroup)
+    public async Task<ForumGroupModel> PrepareForumGroupModelAsync(ForumGroup forumGroup)
     {
         ArgumentNullException.ThrowIfNull(forumGroup);
 
@@ -270,7 +234,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the boards index model
     /// </returns>
-    public virtual async Task<BoardsIndexModel> PrepareBoardsIndexModelAsync()
+    public async Task<BoardsIndexModel> PrepareBoardsIndexModelAsync()
     {
         var model = new BoardsIndexModel();
 
@@ -290,7 +254,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the active discussions model
     /// </returns>
-    public virtual async Task<ActiveDiscussionsModel> PrepareActiveDiscussionsModelAsync()
+    public async Task<ActiveDiscussionsModel> PrepareActiveDiscussionsModelAsync()
     {
         var model = new ActiveDiscussionsModel
         {
@@ -319,7 +283,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the active discussions model
     /// </returns>
-    public virtual async Task<ActiveDiscussionsModel> PrepareActiveDiscussionsModelAsync(int forumId, int page)
+    public async Task<ActiveDiscussionsModel> PrepareActiveDiscussionsModelAsync(int forumId, int page)
     {
         var model = new ActiveDiscussionsModel
         {
@@ -331,7 +295,7 @@ public class ForumModelFactory
 
         var pageSize = _forumSettings.ActiveDiscussionsPageSize > 0 ? _forumSettings.ActiveDiscussionsPageSize : 50;
 
-        var topics = await _forumService.GetActiveTopicsAsync(forumId, (page - 1), pageSize);
+        var topics = await _forumService.GetActiveTopicsAsync(forumId, page - 1, pageSize);
         model.TopicPageSize = topics.PageSize;
         model.TopicTotalRecords = topics.TotalCount;
         model.TopicPageIndex = topics.PageIndex;
@@ -353,7 +317,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the forum page model
     /// </returns>
-    public virtual async Task<ForumPageModel> PrepareForumPageModelAsync(Forum forum, int page)
+    public async Task<ForumPageModel> PrepareForumPageModelAsync(Forum forum, int page)
     {
         ArgumentNullException.ThrowIfNull(forum);
 
@@ -377,9 +341,7 @@ public class ForumModelFactory
 
             var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(customer.Id, forum.Id, 0, 0, 1)).FirstOrDefault();
             if (forumSubscription != null)
-            {
                 model.WatchForumText = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.UnwatchForum");
-            }
         }
 
         var topics = await _forumService.GetAllTopicsAsync(forum.Id, 0, string.Empty, ForumSearchType.All, 0, (page - 1), pageSize);
@@ -394,6 +356,7 @@ public class ForumModelFactory
         model.IsCustomerAllowedToSubscribe = await _forumService.IsCustomerAllowedToSubscribeAsync(customer);
         model.ForumFeedsEnabled = _forumSettings.ForumFeedsEnabled;
         model.PostsPageSize = _forumSettings.PostsPageSize;
+
         return model;
     }
 
@@ -406,17 +369,16 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the forum topic page model
     /// </returns>
-    public virtual async Task<ForumTopicPageModel> PrepareForumTopicPageModelAsync(ForumTopic forumTopic, int page)
+    public async Task<ForumTopicPageModel> PrepareForumTopicPageModelAsync(ForumTopic forumTopic, int page)
     {
         ArgumentNullException.ThrowIfNull(forumTopic);
 
         //load first post
-        var firstPost = (await _forumService.GetAllPostsAsync(forumTopic.Id, 0, string.Empty,
-            0, 1)).FirstOrDefault();
+        var firstPost = (await _forumService.GetAllPostsAsync(forumTopic.Id, 0, string.Empty, 0, 1))
+            .FirstOrDefault();
 
         //load posts
-        var posts = await _forumService.GetAllPostsAsync(forumTopic.Id, 0, string.Empty,
-            page - 1, _forumSettings.PostsPageSize);
+        var posts = await _forumService.GetAllPostsAsync(forumTopic.Id, 0, string.Empty, page - 1, _forumSettings.PostsPageSize);
 
         //prepare model
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
@@ -442,11 +404,10 @@ public class ForumModelFactory
         {
             model.WatchTopicText = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.WatchTopic");
 
-            var forumTopicSubscription = (await _forumService.GetAllSubscriptionsAsync(currentCustomer.Id, 0, forumTopic.Id, 0, 1)).FirstOrDefault();
+            var forumTopicSubscription = (await _forumService.GetAllSubscriptionsAsync(currentCustomer.Id, 0, forumTopic.Id, 0, 1))
+                .FirstOrDefault();
             if (forumTopicSubscription != null)
-            {
                 model.WatchTopicText = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.UnwatchTopic");
-            }
         }
         model.ForumEditor = _forumSettings.ForumEditor;
         model.PostsPageIndex = posts.PageIndex;
@@ -477,8 +438,8 @@ public class ForumModelFactory
                 CustomerJoinDate = customer?.CreatedOnUtc ?? DateTime.Now,
                 AllowPrivateMessages = _customerSettings.AllowPrivateMessages && !customerIsGuest,
                 SignaturesEnabled = _forumSettings.SignaturesEnabled,
-                FormattedSignature = _forumService.FormatForumSignatureText(
-                    await _genericAttributeService.GetAttributeAsync<Customer, string>(post.CustomerId, ForumDefaults.SignatureAttribute)),
+                FormattedSignature = _forumService
+                    .FormatForumSignatureText(await _genericAttributeService.GetAttributeAsync<Customer, string>(post.CustomerId, ForumDefaults.SignatureAttribute)),
                 //created on string
                 PostCreatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(post.CreatedOnUtc, DateTimeKind.Utc)
             };
@@ -542,7 +503,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the topic move model
     /// </returns>
-    public virtual async Task<TopicMoveModel> PrepareTopicMoveAsync(ForumTopic forumTopic)
+    public async Task<TopicMoveModel> PrepareTopicMoveAsync(ForumTopic forumTopic)
     {
         ArgumentNullException.ThrowIfNull(forumTopic);
 
@@ -563,7 +524,7 @@ public class ForumModelFactory
     /// <param name="forum">Forum</param>
     /// <param name="model">Edit forum topic model</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task PrepareTopicCreateModelAsync(Forum forum, EditForumTopicModel model)
+    public async Task PrepareTopicCreateModelAsync(Forum forum, EditForumTopicModel model)
     {
         ArgumentNullException.ThrowIfNull(forum);
 
@@ -576,7 +537,7 @@ public class ForumModelFactory
         model.ForumSeName = await _forumService.GetForumSeNameAsync(forum);
         model.ForumEditor = _forumSettings.ForumEditor;
         model.IsCustomerAllowedToSetTopicPriority = await _forumService.IsCustomerAllowedToSetTopicPriorityAsync(customer);
-        model.TopicPriorities = await ForumTopicTypesListAsync();
+        model.TopicPriorities = (await ForumTopicType.Normal.ToSelectListAsync(false)).ToList();
         model.IsCustomerAllowedToSubscribe = await _forumService.IsCustomerAllowedToSubscribeAsync(customer);
         model.DisplayCaptcha = _captchaSettings.Enabled && _forumSettings.ShowCaptcha;
     }
@@ -588,18 +549,19 @@ public class ForumModelFactory
     /// <param name="model">Edit forum topic model</param>
     /// <param name="excludeProperties">Whether to exclude populating of model properties from the entity</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task PrepareTopicEditModelAsync(ForumTopic forumTopic, EditForumTopicModel model, bool excludeProperties)
+    public async Task PrepareTopicEditModelAsync(ForumTopic forumTopic, EditForumTopicModel model, bool excludeProperties)
     {
         ArgumentNullException.ThrowIfNull(forumTopic);
 
         ArgumentNullException.ThrowIfNull(model);
 
-        var forum = await _forumService.GetForumByIdAsync(forumTopic.ForumId) ?? throw new ArgumentException("forum cannot be loaded");
+        var forum = await _forumService.GetForumByIdAsync(forumTopic.ForumId)
+            ?? throw new ArgumentException("forum cannot be loaded");
 
         var customer = await _workContext.GetCurrentCustomerAsync();
         model.IsEdit = true;
         model.Id = forumTopic.Id;
-        model.TopicPriorities = await ForumTopicTypesListAsync();
+        model.TopicPriorities = (await ForumTopicType.Normal.ToSelectListAsync(false)).ToList();
         model.ForumName = forum.Name;
         model.ForumSeName = await _forumService.GetForumSeNameAsync(forum);
         model.ForumId = forum.Id;
@@ -633,11 +595,12 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the edit forum post model
     /// </returns>
-    public virtual async Task<EditForumPostModel> PreparePostCreateModelAsync(ForumTopic forumTopic, int? quote, bool excludeProperties)
+    public async Task<EditForumPostModel> PreparePostCreateModelAsync(ForumTopic forumTopic, int? quote, bool excludeProperties)
     {
         ArgumentNullException.ThrowIfNull(forumTopic);
 
-        var forum = await _forumService.GetForumByIdAsync(forumTopic.ForumId) ?? throw new ArgumentException("forum cannot be loaded");
+        var forum = await _forumService.GetForumByIdAsync(forumTopic.ForumId)
+            ?? throw new ArgumentException("forum cannot be loaded");
 
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
         var model = new EditForumPostModel
@@ -657,8 +620,8 @@ public class ForumModelFactory
             //subscription            
             if (model.IsCustomerAllowedToSubscribe)
             {
-                var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(currentCustomer.Id,
-                    0, forumTopic.Id, 0, 1)).FirstOrDefault();
+                var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(currentCustomer.Id, 0, forumTopic.Id, 0, 1))
+                    .FirstOrDefault();
                 model.Subscribed = forumSubscription != null;
             }
 
@@ -704,13 +667,15 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the edit forum post model
     /// </returns>
-    public virtual async Task<EditForumPostModel> PreparePostEditModelAsync(ForumPost forumPost, bool excludeProperties)
+    public async Task<EditForumPostModel> PreparePostEditModelAsync(ForumPost forumPost, bool excludeProperties)
     {
         ArgumentNullException.ThrowIfNull(forumPost);
 
-        var forumTopic = await _forumService.GetTopicByIdAsync(forumPost.TopicId) ?? throw new ArgumentException("forum topic cannot be loaded");
+        var forumTopic = await _forumService.GetTopicByIdAsync(forumPost.TopicId)
+            ?? throw new ArgumentException("forum topic cannot be loaded");
 
-        var forum = await _forumService.GetForumByIdAsync(forumTopic.ForumId) ?? throw new ArgumentException("forum cannot be loaded");
+        var forum = await _forumService.GetForumByIdAsync(forumTopic.ForumId)
+            ?? throw new ArgumentException("forum cannot be loaded");
 
         var customer = await _workContext.GetCurrentCustomerAsync();
         var model = new EditForumPostModel
@@ -753,7 +718,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the search model
     /// </returns>
-    public virtual async Task<SearchModel> PrepareSearchModelAsync(string searchterms, bool? advs, string forumId,
+    public async Task<SearchModel> PrepareSearchModelAsync(string searchterms, bool? advs, string forumId,
         string within, string limitDays, int page)
     {
         var model = new SearchModel();
@@ -761,51 +726,22 @@ public class ForumModelFactory
         var pageSize = 10;
 
         // Create the values for the "Limit results to previous" select list
-        var limitList = new List<SelectListItem>
+        model.LimitList = new()
         {
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.AllResults"),
-                Value = "0"
-            },
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.1day"),
-                Value = "1"
-            },
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.7days"),
-                Value = "7"
-            },
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.2weeks"),
-                Value = "14"
-            },
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.1month"),
-                Value = "30"
-            },
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.3months"),
-                Value = "92"
-            },
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.6months"),
-                Value = "183"
-            },
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.1year"),
-                Value = "365"
-            }
+            new(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.AllResults"), "0"),
+            new(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.1day"), "1"),
+            new(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.7days"), "7"),
+            new(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.2weeks"), "14"),
+            new(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.1month"), "30"),
+            new(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.3months"), "92"),
+            new(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.6months"), "183"),
+            new(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.LimitResultsToPrevious.1year"), "365")
         };
-        model.LimitList = limitList;
 
         // Create the values for the "Search in forum" select list
         var forumsSelectList = new List<SelectListItem>
         {
-            new() {
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.SearchInForum.All"),
-                Value = "0",
-                Selected = true,
-            }
+            new(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.SearchInForum.All"), "0", true)
         };
 
         var separator = "--";
@@ -813,38 +749,18 @@ public class ForumModelFactory
         foreach (var fg in forumGroups)
         {
             // Add the forum group with value as '-' so it can't be used as a target forum id
-            forumsSelectList.Add(new SelectListItem { Text = fg.Name, Value = "-" });
+            forumsSelectList.Add(new(fg.Name, "-"));
 
             var forums = await _forumService.GetAllForumsByGroupIdAsync(fg.Id);
             foreach (var f in forums)
             {
-                forumsSelectList.Add(
-                    new SelectListItem
-                    {
-                        Text = $"{separator}{f.Name}",
-                        Value = f.Id.ToString()
-                    });
+                forumsSelectList.Add(new($"{separator}{f.Name}", f.Id.ToString()));
             }
         }
         model.ForumList = forumsSelectList;
 
-        // Create the values for "Search within" select list            
-        var withinList = new List<SelectListItem>
-        {
-            new() {
-                Value = ((int) ForumSearchType.All).ToString(),
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.SearchWithin.All")
-            },
-            new() {
-                Value = ((int) ForumSearchType.TopicTitlesOnly).ToString(),
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.SearchWithin.TopicTitlesOnly")
-            },
-            new() {
-                Value = ((int) ForumSearchType.PostTextOnly).ToString(),
-                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Search.SearchWithin.PostTextOnly")
-            }
-        };
-        model.WithinList = withinList;
+        // Create the values for "Search within" select list
+        model.WithinList = (await ForumSearchType.All.ToSelectListAsync(false)).ToList();
 
         _ = int.TryParse(forumId, out var forumIdSelected);
         model.ForumIdSelected = forumIdSelected;
@@ -872,10 +788,7 @@ public class ForumModelFactory
                 model.SearchTerms = searchterms;
 
                 if (searchterms.Length < searchTermMinimumLength)
-                {
-                    throw new NopException(string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.SearchTermMinimumLengthIsNCharacters"),
-                        searchTermMinimumLength));
-                }
+                    throw new NopException(string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.SearchTermMinimumLengthIsNCharacters"), searchTermMinimumLength));
 
                 ForumSearchType searchWithin = 0;
                 var limitResultsToPrevious = 0;
@@ -886,12 +799,10 @@ public class ForumModelFactory
                 }
 
                 if (_forumSettings.SearchResultsPageSize > 0)
-                {
                     pageSize = _forumSettings.SearchResultsPageSize;
-                }
 
-                var topics = await _forumService.GetAllTopicsAsync(forumIdSelected, 0, searchterms, searchWithin,
-                    limitResultsToPrevious, page - 1, pageSize);
+                var topics = await _forumService
+                    .GetAllTopicsAsync(forumIdSelected, 0, searchterms, searchWithin, limitResultsToPrevious, page - 1, pageSize);
                 model.TopicPageSize = topics.PageSize;
                 model.TopicTotalRecords = topics.TotalCount;
                 model.TopicPageIndex = topics.PageIndex;
@@ -901,8 +812,8 @@ public class ForumModelFactory
                     model.ForumTopics.Add(topicModel);
                 }
 
-                model.SearchResultsVisible = (topics.Any());
-                model.NoResultsVisisble = !(model.SearchResultsVisible);
+                model.SearchResultsVisible = topics.Any();
+                model.NoResultsVisisble = !model.SearchResultsVisible;
 
                 return model;
             }
@@ -930,7 +841,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the last post model
     /// </returns>
-    public virtual async Task<LastPostModel> PrepareLastPostModelAsync(ForumPost forumPost, bool showTopic)
+    public async Task<LastPostModel> PrepareLastPostModelAsync(ForumPost forumPost, bool showTopic)
     {
         var model = new LastPostModel
         {
@@ -942,7 +853,6 @@ public class ForumModelFactory
             return model;
 
         var topic = await _forumService.GetTopicByIdAsync(forumPost.TopicId);
-
         if (topic is null)
             return model;
 
@@ -963,7 +873,9 @@ public class ForumModelFactory
             model.PostCreatedOnStr = string.Format(await _localizationService.GetResourceAsync("Common.RelativeDateTime.Past"), postCreatedAgo);
         }
         else
+        {
             model.PostCreatedOnStr = (await _dateTimeHelper.ConvertToUserTimeAsync(forumPost.CreatedOnUtc, DateTimeKind.Utc)).ToString("f");
+        }
 
         return model;
     }
@@ -978,7 +890,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the forum breadcrumb model
     /// </returns>
-    public virtual async Task<ForumBreadcrumbModel> PrepareForumBreadcrumbModelAsync(int? forumGroupId, int? forumId, int? forumTopicId)
+    public async Task<ForumBreadcrumbModel> PrepareForumBreadcrumbModelAsync(int? forumGroupId, int? forumId, int? forumTopicId)
     {
         var model = new ForumBreadcrumbModel();
 
@@ -1021,13 +933,11 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the customer forum subscriptions model
     /// </returns>
-    public virtual async Task<CustomerForumSubscriptionsModel> PrepareCustomerForumSubscriptionsModelAsync(int? page)
+    public async Task<CustomerForumSubscriptionsModel> PrepareCustomerForumSubscriptionsModelAsync(int? page)
     {
         var pageIndex = 0;
         if (page > 0)
-        {
             pageIndex = page.Value - 1;
-        }
 
         var customer = await _workContext.GetCurrentCustomerAsync();
 
@@ -1065,7 +975,7 @@ public class ForumModelFactory
                 }
             }
 
-            model.ForumSubscriptions.Add(new CustomerForumSubscriptionsModel.ForumSubscriptionModel
+            model.ForumSubscriptions.Add(new()
             {
                 Id = forumSubscription.Id,
                 ForumTopicId = forumTopicId,
@@ -1076,7 +986,7 @@ public class ForumModelFactory
             });
         }
 
-        model.PagerModel = new PagerModel(_localizationService)
+        model.PagerModel = new(_localizationService)
         {
             PageSize = list.PageSize,
             TotalRecords = list.TotalCount,
@@ -1098,7 +1008,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the forum topic row model
     /// </returns>
-    public virtual async Task<ForumTopicRowModel> PrepareForumTopicRowModelAsync(ForumTopic topic)
+    public async Task<ForumTopicRowModel> PrepareForumTopicRowModelAsync(ForumTopic topic)
     {
         ArgumentNullException.ThrowIfNull(topic);
 
@@ -1133,7 +1043,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the forum row model
     /// </returns>
-    public virtual async Task<ForumRowModel> PrepareForumRowModelAsync(Forum forum)
+    public async Task<ForumRowModel> PrepareForumRowModelAsync(Forum forum)
     {
         ArgumentNullException.ThrowIfNull(forum);
 
@@ -1151,8 +1061,6 @@ public class ForumModelFactory
         return forumModel;
     }
 
-
-
     /// <summary>
     /// Prepare the profile posts model
     /// </summary>
@@ -1162,14 +1070,12 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the profile posts model
     /// </returns>
-    public virtual async Task<ProfilePostsModel> PrepareProfilePostsModelAsync(Customer customer, int page)
+    public async Task<ProfilePostsModel> PrepareProfilePostsModelAsync(Customer customer, int page)
     {
         ArgumentNullException.ThrowIfNull(customer);
 
         if (page > 0)
-        {
             page -= 1;
-        }
 
         var pageSize = _forumSettings.LatestCustomerPostsPageSize;
 
@@ -1193,7 +1099,7 @@ public class ForumModelFactory
 
             var topic = await _forumService.GetTopicByIdAsync(forumPost.TopicId);
 
-            latestPosts.Add(new PostsModel
+            latestPosts.Add(new()
             {
                 ForumTopicId = topic.Id,
                 ForumTopicTitle = topic.Subject,
@@ -1225,12 +1131,20 @@ public class ForumModelFactory
         return model;
     }
 
-    public virtual async Task<ForumAccountInfoModel> PrepareForumAccountInfoModelAsync()
+    /// <summary>
+    /// Prepare forum account info model
+    /// </summary>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the forum account info model
+    /// </returns>
+    public async Task<ForumAccountInfoModel> PrepareForumAccountInfoModelAsync()
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
 
-        return new ForumAccountInfoModel
+        return new()
         {
+            Id = customer.Id,
             Signature = await _genericAttributeService.GetAttributeAsync<string>(customer, ForumDefaults.SignatureAttribute)
         };
     }

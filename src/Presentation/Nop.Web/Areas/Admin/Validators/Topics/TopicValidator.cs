@@ -1,18 +1,19 @@
 ﻿using FluentValidation;
 using Nop.Core.Domain.Topics;
 using Nop.Services.Localization;
+using Nop.Services.Seo;
 using Nop.Web.Areas.Admin.Models.Topics;
 using Nop.Web.Framework.Validators;
 
-namespace Nop.Plugin.Misc.Forums.Admin.Validators;
+namespace Nop.Web.Areas.Admin.Validators.Topics;
 
-public class TopicValidator : BaseNopValidator<TopicModel>
+public partial class TopicValidator : BaseNopValidator<TopicModel>
 {
     public TopicValidator(ILocalizationService localizationService)
     {
         RuleFor(x => x.SeName)
-            .Length(0, ForumDefaults.ForumTopicLength)
-            .WithMessageAwait(localizationService.GetResourceAsync("Admin.SEO.SeName.MaxLengthValidation"), ForumDefaults.ForumTopicLength);
+            .Length(0, NopSeoDefaults.SearchEngineNameLength)
+            .WithMessageAwait(localizationService.GetResourceAsync("Admin.SEO.SeName.MaxLengthValidation"), NopSeoDefaults.SearchEngineNameLength);
 
         RuleFor(x => x.Password)
             .NotEmpty()

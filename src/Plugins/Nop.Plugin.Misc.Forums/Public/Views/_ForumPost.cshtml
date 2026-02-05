@@ -1,9 +1,9 @@
 ﻿@model ForumPostModel
 
-@inject IWebHelper webHelper;
 @{
     var thisPageUrl = webHelper.GetThisPageUrl(true);
 }
+
 <div class="topic-post" id="@Html.Encode($"post{Model.Id}")">
     <div class="post-info">
         <div class="user-info">

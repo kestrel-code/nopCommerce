@@ -4,12 +4,11 @@ using Nop.Web.Framework.Models;
 
 namespace Nop.Plugin.Misc.Forums.Public.Models;
 
-public record EditForumTopicModel : BaseNopModel
+public record EditForumTopicModel : BaseNopEntityModel
 {
     #region Properties
 
     public bool IsEdit { get; set; }
-    public int Id { get; set; }
     public int ForumId { get; set; }
     public string ForumName { get; set; }
     public string ForumSeName { get; set; }

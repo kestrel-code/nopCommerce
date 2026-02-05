@@ -1,12 +1,4 @@
-﻿@using Nop.Core
-@using Nop.Core.Domain.Seo
-@using Nop.Services.Localization
-
-@model ForumTopicPageModel
-
-@inject ILocalizationService localizationService
-@inject IWebHelper webHelper
-@inject SeoSettings seoSettings
+﻿@model ForumTopicPageModel
 
 @{
     Layout = "_ColumnsOne";
@@ -22,17 +14,9 @@
 
     if (seoSettings.CanonicalUrlsEnabled)
     {
-        var topicUrl = string.Empty;
-        if (Model.PostsPageIndex > 0)
-        {
-            topicUrl = Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG_PAGED, 
-                new { id = Model.Id, slug = Model.SeName, pageNumber = Model.PostsPageIndex + 1 }, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant();
-        }
-        else
-        {
-            topicUrl = Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, 
-                new { id = Model.Id, slug = Model.SeName }, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant();
-        }
+        var topicUrl = Model.PostsPageIndex > 0 
+            ?  Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG_PAGED, new { id = Model.Id, slug = Model.SeName, pageNumber = Model.PostsPageIndex + 1 }, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant()
+            : Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = Model.Id, slug = Model.SeName }, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant();
 
         NopHtml.AddCanonicalUrlParts(topicUrl, seoSettings.QueryStringInCanonicalUrlsEnabled);
     }

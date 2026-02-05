@@ -1,4 +1,5 @@
-﻿using Nop.Web.Framework.Models;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.Forums.Admin.Models;
@@ -8,15 +9,6 @@ namespace Nop.Plugin.Misc.Forums.Admin.Models;
 /// </summary>
 public record ForumModel : BaseNopEntityModel
 {
-    #region Ctor
-
-    public ForumModel()
-    {
-        ForumGroups = new List<ForumGroupModel>();
-    }
-
-    #endregion
-
     #region Properties
 
     [NopResourceDisplayName("Plugins.Misc.Forums.Forum.Fields.ForumGroupId")]
@@ -34,7 +26,7 @@ public record ForumModel : BaseNopEntityModel
     [NopResourceDisplayName("Plugins.Misc.Forums.Forum.Fields.CreatedOn")]
     public DateTime CreatedOn { get; set; }
 
-    public List<ForumGroupModel> ForumGroups { get; set; }
+    public List<SelectListItem> ForumGroups { get; set; } = new();
 
     #endregion
 }

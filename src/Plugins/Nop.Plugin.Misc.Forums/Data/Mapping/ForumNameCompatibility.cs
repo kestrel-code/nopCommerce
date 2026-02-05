@@ -6,7 +6,7 @@ namespace Nop.Plugin.Misc.Forums.Data.Mapping;
 /// <summary>
 /// Plugin table naming compatibility
 /// </summary>
-public class ForumsNameCompatibility : INameCompatibility
+public class ForumNameCompatibility : INameCompatibility
 {
     public Dictionary<Type, string> TableNames => new() {
         { typeof(ForumGroup), "Forums_Group" },

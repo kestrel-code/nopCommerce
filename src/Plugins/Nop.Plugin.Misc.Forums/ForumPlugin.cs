@@ -13,22 +13,22 @@ namespace Nop.Plugin.Misc.Forums;
 /// <summary>
 /// Represents the Forums plugin
 /// </summary>
-public class ForumsPlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
+public class ForumPlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 {
     #region Fields
 
+    private readonly ForumInstallService _forumsInstallService;
     private readonly INopUrlHelper _nopUrlHelper;
     private readonly ISettingService _settingService;
-    private readonly ForumsInstallService _forumsInstallService;
     private readonly WidgetSettings _widgetSettings;
 
     #endregion
 
     #region Ctor
 
-    public ForumsPlugin(INopUrlHelper nopUrlHelper,
+    public ForumPlugin(ForumInstallService forumsInstallService,
+        INopUrlHelper nopUrlHelper,
         ISettingService settingService,
-        ForumsInstallService forumsInstallService,
         WidgetSettings widgetSettings)
     {
         _nopUrlHelper = nopUrlHelper;

@@ -26,9 +26,9 @@ public class BoardsController : BasePublicController
 
     private readonly CaptchaSettings _captchaSettings;
     private readonly CustomerSettings _customerSettings;
-    private readonly ForumSettings _forumSettings;
     private readonly ForumModelFactory _forumModelFactory;
     private readonly ForumService _forumService;
+    private readonly ForumSettings _forumSettings;
     private readonly ICustomerService _customerService;
     private readonly IGenericAttributeService _genericAttributeService;
     private readonly ILocalizationService _localizationService;
@@ -43,9 +43,9 @@ public class BoardsController : BasePublicController
 
     public BoardsController(CaptchaSettings captchaSettings,
         CustomerSettings customerSettings,
-        ForumSettings forumSettings,
         ForumModelFactory forumModelFactory,
         ForumService forumService,
+        ForumSettings forumSettings,
         ICustomerService customerService,
         IGenericAttributeService genericAttributeService,
         ILocalizationService localizationService,
@@ -56,9 +56,9 @@ public class BoardsController : BasePublicController
     {
         _captchaSettings = captchaSettings;
         _customerSettings = customerSettings;
-        _forumSettings = forumSettings;
         _forumModelFactory = forumModelFactory;
         _forumService = forumService;
+        _forumSettings = forumSettings;
         _customerService = customerService;
         _genericAttributeService = genericAttributeService;
         _localizationService = localizationService;
@@ -72,7 +72,7 @@ public class BoardsController : BasePublicController
 
     #region Methods
 
-    public virtual async Task<IActionResult> Index()
+    public async Task<IActionResult> Index()
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -82,7 +82,7 @@ public class BoardsController : BasePublicController
         return View("~/Plugins/Misc.Forums/Public/Views/Index.cshtml", model);
     }
 
-    public virtual async Task<IActionResult> ActiveDiscussions(int forumId = 0, int pageNumber = 1)
+    public async Task<IActionResult> ActiveDiscussions(int forumId = 0, int pageNumber = 1)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -93,7 +93,7 @@ public class BoardsController : BasePublicController
     }
 
     [CheckLanguageSeoCode(ignore: true)]
-    public virtual async Task<IActionResult> ActiveDiscussionsRss(int forumId = 0)
+    public async Task<IActionResult> ActiveDiscussionsRss(int forumId = 0)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -124,15 +124,14 @@ public class BoardsController : BasePublicController
             var topicUrl = Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = topic.Id, slug = await _forumService.GetTopicSeNameAsync(topic) }, _webHelper.GetCurrentRequestProtocol());
             var content = $"{repliesText}: {(topic.NumPosts > 0 ? topic.NumPosts - 1 : 0)}, {viewsText}: {topic.Views}";
 
-            items.Add(new RssItem(topic.Subject, content, new Uri(topicUrl),
-                $"urn:store:{store.Id}:activeDiscussions:topic:{topic.Id}", topic.LastPostTime ?? topic.UpdatedOnUtc));
+            items.Add(new(topic.Subject, content, new Uri(topicUrl), $"urn:store:{store.Id}:activeDiscussions:topic:{topic.Id}", topic.LastPostTime ?? topic.UpdatedOnUtc));
         }
         feed.Items = items;
 
         return new RssActionResult(feed, _webHelper.GetThisPageUrl(false));
     }
 
-    public virtual async Task<IActionResult> ForumGroup(int id)
+    public async Task<IActionResult> ForumGroup(int id)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -146,7 +145,7 @@ public class BoardsController : BasePublicController
         return View("~/Plugins/Misc.Forums/Public/Views/ForumGroup.cshtml", model);
     }
 
-    public virtual async Task<IActionResult> Forum(int id, int pageNumber = 1)
+    public async Task<IActionResult> Forum(int id, int pageNumber = 1)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -160,7 +159,8 @@ public class BoardsController : BasePublicController
         return View("~/Plugins/Misc.Forums/Public/Views/Forum.cshtml", model);
     }
 
-    public virtual async Task<IActionResult> ForumRss(int id)
+    [CheckLanguageSeoCode(ignore: true)]
+    public async Task<IActionResult> ForumRss(int id)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -174,8 +174,7 @@ public class BoardsController : BasePublicController
         if (forum != null)
         {
             //Order by newest topic posts & limit the number of topics to return
-            var topics = await _forumService.GetAllTopicsAsync(forum.Id, 0, string.Empty,
-                ForumSearchType.All, 0, 0, topicLimit);
+            var topics = await _forumService.GetAllTopicsAsync(forum.Id, 0, string.Empty, ForumSearchType.All, 0, 0, topicLimit);
 
             var url = Url.RouteUrl(ForumDefaults.Routes.Public.FORUM_RSS, new { id = forum.Id }, _webHelper.GetCurrentRequestProtocol());
 
@@ -199,7 +198,7 @@ public class BoardsController : BasePublicController
                 var topicUrl = Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = topic.Id, slug = await _forumService.GetTopicSeNameAsync(topic) }, _webHelper.GetCurrentRequestProtocol());
                 var content = $"{repliesText}: {(topic.NumPosts > 0 ? topic.NumPosts - 1 : 0)}, {viewsText}: {topic.Views}";
 
-                items.Add(new RssItem(topic.Subject, content, new Uri(topicUrl), $"urn:store:{store.Id}:forum:topic:{topic.Id}", topic.LastPostTime ?? topic.UpdatedOnUtc));
+                items.Add(new(topic.Subject, content, new Uri(topicUrl), $"urn:store:{store.Id}:forum:topic:{topic.Id}", topic.LastPostTime ?? topic.UpdatedOnUtc));
             }
 
             feed.Items = items;
@@ -211,7 +210,7 @@ public class BoardsController : BasePublicController
     }
 
     [HttpPost]
-    public virtual async Task<IActionResult> ForumWatch(int id)
+    public async Task<IActionResult> ForumWatch(int id)
     {
         var watchTopic = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.WatchForum");
         var unwatchTopic = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.UnwatchForum");
@@ -225,8 +224,7 @@ public class BoardsController : BasePublicController
         if (!await _forumService.IsCustomerAllowedToSubscribeAsync(customer))
             return Json(new { Subscribed = false, Text = returnText, Error = true });
 
-        var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(customer.Id,
-            forum.Id, 0, 0, 1)).FirstOrDefault();
+        var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(customer.Id, forum.Id, 0, 0, 1)).FirstOrDefault();
 
         bool subscribed;
         if (forumSubscription == null)
@@ -251,7 +249,7 @@ public class BoardsController : BasePublicController
         return Json(new { Subscribed = subscribed, Text = returnText, Error = false });
     }
 
-    public virtual async Task<IActionResult> Topic(int id, int pageNumber = 1)
+    public async Task<IActionResult> Topic(int id, int pageNumber = 1)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -277,7 +275,7 @@ public class BoardsController : BasePublicController
     }
 
     [HttpPost]
-    public virtual async Task<IActionResult> TopicWatch(int id)
+    public async Task<IActionResult> TopicWatch(int id)
     {
         var watchTopic = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.WatchTopic");
         var unwatchTopic = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.UnwatchTopic");
@@ -291,8 +289,7 @@ public class BoardsController : BasePublicController
         if (!await _forumService.IsCustomerAllowedToSubscribeAsync(customer))
             return Json(new { Subscribed = false, Text = returnText, Error = true });
 
-        var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(customer.Id,
-            0, forumTopic.Id, 0, 1)).FirstOrDefault();
+        var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(customer.Id, 0, forumTopic.Id, 0, 1)).FirstOrDefault();
 
         bool subscribed;
         if (forumSubscription == null)
@@ -317,7 +314,7 @@ public class BoardsController : BasePublicController
         return Json(new { Subscribed = subscribed, Text = returnText, Error = false });
     }
 
-    public virtual async Task<IActionResult> TopicMove(int id)
+    public async Task<IActionResult> TopicMove(int id)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -335,7 +332,7 @@ public class BoardsController : BasePublicController
     }
 
     [HttpPost]
-    public virtual async Task<IActionResult> TopicMove(TopicMoveModel model)
+    public async Task<IActionResult> TopicMove(TopicMoveModel model)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -355,7 +352,7 @@ public class BoardsController : BasePublicController
     }
 
     [HttpPost]
-    public virtual async Task<IActionResult> TopicDelete(int id)
+    public async Task<IActionResult> TopicDelete(int id)
     {
         if (!_forumSettings.ForumsEnabled)
         {
@@ -390,7 +387,7 @@ public class BoardsController : BasePublicController
         });
     }
 
-    public virtual async Task<IActionResult> TopicCreate(int id)
+    public async Task<IActionResult> TopicCreate(int id)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -399,7 +396,7 @@ public class BoardsController : BasePublicController
         if (forum == null)
             return RedirectToRoute(ForumDefaults.Routes.Public.BOARDS);
 
-        if (await _forumService.IsCustomerAllowedToCreateTopicAsync(await _workContext.GetCurrentCustomerAsync(), forum) == false)
+        if (!await _forumService.IsCustomerAllowedToCreateTopicAsync(await _workContext.GetCurrentCustomerAsync(), forum))
             return Challenge();
 
         var model = new EditForumTopicModel();
@@ -410,7 +407,7 @@ public class BoardsController : BasePublicController
 
     [HttpPost]
     [ValidateCaptcha]
-    public virtual async Task<IActionResult> TopicCreate(EditForumTopicModel model, bool captchaValid)
+    public async Task<IActionResult> TopicCreate(EditForumTopicModel model, bool captchaValid)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -421,9 +418,7 @@ public class BoardsController : BasePublicController
 
         //validate CAPTCHA
         if (_captchaSettings.Enabled && _forumSettings.ShowCaptcha && !captchaValid)
-        {
             ModelState.AddModelError("", await _localizationService.GetResourceAsync("Common.WrongCaptchaMessage"));
-        }
 
         if (ModelState.IsValid)
         {
@@ -431,16 +426,12 @@ public class BoardsController : BasePublicController
             {
                 var customer = await _workContext.GetCurrentCustomerAsync();
                 if (!await _forumService.IsCustomerAllowedToCreateTopicAsync(customer, forum))
-                {
                     return Challenge();
-                }
 
                 var subject = model.Subject;
                 var maxSubjectLength = _forumSettings.TopicSubjectMaxLength;
                 if (maxSubjectLength > 0 && subject.Length > maxSubjectLength)
-                {
                     subject = subject[0..maxSubjectLength];
-                }
 
                 var text = model.Text;
                 var maxPostLength = _forumSettings.PostMaxLength;
@@ -463,7 +454,7 @@ public class BoardsController : BasePublicController
                     CreatedOnUtc = nowUtc,
                     UpdatedOnUtc = nowUtc
                 };
-                await _forumService.InsertTopicAsync(forumTopic, true);
+                await _forumService.InsertTopicAsync(forumTopic);
 
                 //forum post
                 var forumPost = new ForumPost
@@ -486,20 +477,15 @@ public class BoardsController : BasePublicController
                 await _forumService.UpdateTopicAsync(forumTopic);
 
                 //subscription                
-                if (await _forumService.IsCustomerAllowedToSubscribeAsync(customer))
+                if (await _forumService.IsCustomerAllowedToSubscribeAsync(customer) && model.Subscribed)
                 {
-                    if (model.Subscribed)
+                    await _forumService.InsertSubscriptionAsync(new()
                     {
-                        var forumSubscription = new ForumSubscription
-                        {
-                            SubscriptionGuid = Guid.NewGuid(),
-                            CustomerId = customer.Id,
-                            TopicId = forumTopic.Id,
-                            CreatedOnUtc = nowUtc
-                        };
-
-                        await _forumService.InsertSubscriptionAsync(forumSubscription);
-                    }
+                        SubscriptionGuid = Guid.NewGuid(),
+                        CustomerId = customer.Id,
+                        TopicId = forumTopic.Id,
+                        CreatedOnUtc = nowUtc
+                    });
                 }
 
                 return RedirectToRoute(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = forumTopic.Id, slug = await _forumService.GetTopicSeNameAsync(forumTopic) });
@@ -516,7 +502,7 @@ public class BoardsController : BasePublicController
         return View("~/Plugins/Misc.Forums/Public/Views/TopicCreate.cshtml", model);
     }
 
-    public virtual async Task<IActionResult> TopicEdit(int id)
+    public async Task<IActionResult> TopicEdit(int id)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -536,7 +522,7 @@ public class BoardsController : BasePublicController
 
     [HttpPost]
     [ValidateCaptcha]
-    public virtual async Task<IActionResult> TopicEdit(EditForumTopicModel model, bool captchaValid)
+    public async Task<IActionResult> TopicEdit(EditForumTopicModel model, bool captchaValid)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -552,9 +538,7 @@ public class BoardsController : BasePublicController
 
         //validate CAPTCHA
         if (_captchaSettings.Enabled && _forumSettings.ShowCaptcha && !captchaValid)
-        {
             ModelState.AddModelError("", await _localizationService.GetResourceAsync("Common.WrongCaptchaMessage"));
-        }
 
         if (ModelState.IsValid)
         {
@@ -567,9 +551,7 @@ public class BoardsController : BasePublicController
                 var subject = model.Subject;
                 var maxSubjectLength = _forumSettings.TopicSubjectMaxLength;
                 if (maxSubjectLength > 0 && subject.Length > maxSubjectLength)
-                {
                     subject = subject[0..maxSubjectLength];
-                }
 
                 var text = model.Text;
                 var maxPostLength = _forumSettings.PostMaxLength;
@@ -614,8 +596,7 @@ public class BoardsController : BasePublicController
                 //subscription
                 if (await _forumService.IsCustomerAllowedToSubscribeAsync(customer))
                 {
-                    var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(customer.Id,
-                        0, forumTopic.Id, 0, 1)).FirstOrDefault();
+                    var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(customer.Id, 0, forumTopic.Id, 0, 1)).FirstOrDefault();
                     if (model.Subscribed)
                     {
                         if (forumSubscription == null)
@@ -634,9 +615,7 @@ public class BoardsController : BasePublicController
                     else
                     {
                         if (forumSubscription != null)
-                        {
                             await _forumService.DeleteSubscriptionAsync(forumSubscription);
-                        }
                     }
                 }
 
@@ -656,7 +635,7 @@ public class BoardsController : BasePublicController
     }
 
     [HttpPost]
-    public virtual async Task<IActionResult> PostDelete(int id)
+    public async Task<IActionResult> PostDelete(int id)
     {
         if (!_forumSettings.ForumsEnabled)
         {
@@ -698,7 +677,7 @@ public class BoardsController : BasePublicController
 
     }
 
-    public virtual async Task<IActionResult> PostCreate(int id, int? quote)
+    public async Task<IActionResult> PostCreate(int id, int? quote)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -717,7 +696,7 @@ public class BoardsController : BasePublicController
 
     [HttpPost]
     [ValidateCaptcha]
-    public virtual async Task<IActionResult> PostCreate(EditForumPostModel model, bool captchaValid)
+    public async Task<IActionResult> PostCreate(EditForumPostModel model, bool captchaValid)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -728,9 +707,7 @@ public class BoardsController : BasePublicController
 
         //validate CAPTCHA
         if (_captchaSettings.Enabled && _forumSettings.ShowCaptcha && !captchaValid)
-        {
             ModelState.AddModelError("", await _localizationService.GetResourceAsync("Common.WrongCaptchaMessage"));
-        }
 
         if (ModelState.IsValid)
         {
@@ -761,8 +738,7 @@ public class BoardsController : BasePublicController
                 //subscription
                 if (await _forumService.IsCustomerAllowedToSubscribeAsync(customer))
                 {
-                    var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(customer.Id,
-                        0, forumPost.TopicId, 0, 1)).FirstOrDefault();
+                    var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(customer.Id, 0, forumPost.TopicId, 0, 1)).FirstOrDefault();
                     if (model.Subscribed)
                     {
                         if (forumSubscription == null)
@@ -781,20 +757,16 @@ public class BoardsController : BasePublicController
                     else
                     {
                         if (forumSubscription != null)
-                        {
                             await _forumService.DeleteSubscriptionAsync(forumSubscription);
-                        }
                     }
                 }
 
                 var pageSize = _forumSettings.PostsPageSize > 0 ? _forumSettings.PostsPageSize : 10;
 
                 var pageIndex = await _forumService.CalculateTopicPageIndexAsync(forumPost.TopicId, pageSize, forumPost.Id) + 1;
-                string url;
-                if (pageIndex > 1)
-                    url = Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG_PAGED, new { id = forumPost.TopicId, slug = await _forumService.GetTopicSeNameAsync(forumTopic), pageNumber = pageIndex });
-                else
-                    url = Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = forumPost.TopicId, slug = await _forumService.GetTopicSeNameAsync(forumTopic) });
+                var url = pageIndex > 1
+                    ? Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG_PAGED, new { id = forumPost.TopicId, slug = await _forumService.GetTopicSeNameAsync(forumTopic), pageNumber = pageIndex })
+                    : Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = forumPost.TopicId, slug = await _forumService.GetTopicSeNameAsync(forumTopic) });
                 return LocalRedirect($"{url}#{forumPost.Id}");
             }
             catch (Exception ex)
@@ -809,7 +781,7 @@ public class BoardsController : BasePublicController
         return View("~/Plugins/Misc.Forums/Public/Views/PostCreate.cshtml", model);
     }
 
-    public virtual async Task<IActionResult> PostEdit(int id)
+    public async Task<IActionResult> PostEdit(int id)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -828,7 +800,7 @@ public class BoardsController : BasePublicController
 
     [HttpPost]
     [ValidateCaptcha]
-    public virtual async Task<IActionResult> PostEdit(EditForumPostModel model, bool captchaValid)
+    public async Task<IActionResult> PostEdit(EditForumPostModel model, bool captchaValid)
     {
         if (!_forumSettings.ForumsEnabled)
             return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
@@ -851,9 +823,7 @@ public class BoardsController : BasePublicController
 
         //validate CAPTCHA
         if (_captchaSettings.Enabled && _forumSettings.ShowCaptcha && !captchaValid)
-        {
             ModelState.AddModelError("", await _localizationService.GetResourceAsync("Common.WrongCaptchaMessage"));
-        }
 
         if (ModelState.IsValid)
         {
@@ -864,9 +834,7 @@ public class BoardsController : BasePublicController
                 var text = model.Text;
                 var maxPostLength = _forumSettings.PostMaxLength;
                 if (maxPostLength > 0 && text.Length > maxPostLength)
-                {
                     text = text[0..maxPostLength];
-                }
 
                 forumPost.UpdatedOnUtc = nowUtc;
                 forumPost.Text = text;
@@ -875,8 +843,7 @@ public class BoardsController : BasePublicController
                 //subscription
                 if (await _forumService.IsCustomerAllowedToSubscribeAsync(customer))
                 {
-                    var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(customer.Id,
-                        0, forumPost.TopicId, 0, 1)).FirstOrDefault();
+                    var forumSubscription = (await _forumService.GetAllSubscriptionsAsync(customer.Id, 0, forumPost.TopicId, 0, 1)).FirstOrDefault();
                     if (model.Subscribed)
                     {
                         if (forumSubscription == null)
@@ -894,23 +861,16 @@ public class BoardsController : BasePublicController
                     else
                     {
                         if (forumSubscription != null)
-                        {
                             await _forumService.DeleteSubscriptionAsync(forumSubscription);
-                        }
                     }
                 }
 
                 var pageSize = _forumSettings.PostsPageSize > 0 ? _forumSettings.PostsPageSize : 10;
                 var pageIndex = (await _forumService.CalculateTopicPageIndexAsync(forumPost.TopicId, pageSize, forumPost.Id) + 1);
-                string url;
-                if (pageIndex > 1)
-                {
-                    url = Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG_PAGED, new { id = forumPost.TopicId, slug = await _forumService.GetTopicSeNameAsync(forumTopic), pageNumber = pageIndex });
-                }
-                else
-                {
-                    url = Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = forumPost.TopicId, slug = await _forumService.GetTopicSeNameAsync(forumTopic) });
-                }
+                var url = pageIndex > 1
+                    ? Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG_PAGED, new { id = forumPost.TopicId, slug = await _forumService.GetTopicSeNameAsync(forumTopic), pageNumber = pageIndex })
+                    : Url.RouteUrl(ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = forumPost.TopicId, slug = await _forumService.GetTopicSeNameAsync(forumTopic) });
+
                 return LocalRedirect($"{url}#{forumPost.Id}");
             }
             catch (Exception ex)
@@ -925,7 +885,7 @@ public class BoardsController : BasePublicController
         return View("~/Plugins/Misc.Forums/Public/Views/PostEdit.cshtml", model);
     }
 
-    public virtual async Task<IActionResult> Search(string searchterms, bool? advs, string forumId,
+    public async Task<IActionResult> Search(string searchterms, bool? advs, string forumId,
         string within, string limitDays, int pageNumber = 1)
     {
         if (!_forumSettings.ForumsEnabled)
@@ -936,7 +896,7 @@ public class BoardsController : BasePublicController
         return View("~/Plugins/Misc.Forums/Public/Views/Search.cshtml", model);
     }
 
-    public virtual async Task<IActionResult> CustomerForumSubscriptions(int? pageNumber)
+    public async Task<IActionResult> CustomerForumSubscriptions(int? pageNumber)
     {
         if (!_forumSettings.AllowCustomersToManageSubscriptions)
             return RedirectToRoute(NopRouteNames.General.CUSTOMER_INFO);
@@ -947,7 +907,7 @@ public class BoardsController : BasePublicController
     }
 
     [HttpPost, ActionName("CustomerForumSubscriptions")]
-    public virtual async Task<IActionResult> CustomerForumSubscriptionsPOST(IFormCollection formCollection)
+    public async Task<IActionResult> CustomerForumSubscriptionsPOST(IFormCollection formCollection)
     {
         foreach (var key in formCollection.Keys)
         {
@@ -962,9 +922,7 @@ public class BoardsController : BasePublicController
                     var customer = await _workContext.GetCurrentCustomerAsync();
 
                     if (forumSubscription != null && forumSubscription.CustomerId == customer.Id)
-                    {
                         await _forumService.DeleteSubscriptionAsync(forumSubscription);
-                    }
                 }
             }
         }
@@ -973,7 +931,7 @@ public class BoardsController : BasePublicController
     }
 
     [HttpPost]
-    public virtual async Task<IActionResult> PostVote(int postId, bool isUp)
+    public async Task<IActionResult> PostVote(int postId, bool isUp)
     {
         if (!_forumSettings.AllowPostVoting)
             return new NullJsonResult();
@@ -1026,7 +984,7 @@ public class BoardsController : BasePublicController
             });
         }
 
-        await _forumService.InsertPostVoteAsync(new ForumPostVote
+        await _forumService.InsertPostVoteAsync(new()
         {
             CustomerId = customer.Id,
             ForumPostId = postId,
@@ -1037,11 +995,12 @@ public class BoardsController : BasePublicController
         return Json(new { VoteCount = forumPost.VoteCount, IsUp = isUp });
     }
 
-
     [HttpPost]
-    public virtual async Task<IActionResult> SaveForumAccountInfo(ForumAccountInfoModel model)
+    public async Task<IActionResult> SaveForumAccountInfo(ForumAccountInfoModel model)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
+        if (!await _customerService.IsRegisteredAsync(customer))
+            return Challenge();
 
         await _genericAttributeService.SaveAttributeAsync(customer, ForumDefaults.SignatureAttribute, model.Signature);
 
@@ -1053,7 +1012,8 @@ public class BoardsController : BasePublicController
     public async Task<IActionResult> ProfilePosts(int id, int pageNumber)
     {
         var customer = await _customerService.GetCustomerByIdAsync(id);
-        ArgumentNullException.ThrowIfNull(customer);
+        if (customer is null)
+            return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
 
         var model = await _forumModelFactory.PrepareProfilePostsModelAsync(customer, pageNumber);
 

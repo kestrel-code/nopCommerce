@@ -1,10 +1,5 @@
 ﻿@model ActiveDiscussionsModel
 
-@using Nop.Core.Domain.Seo
-
-@inject SeoSettings seoSettings
-@inject IWebHelper webHelper
-
 @{
     Layout = "_ColumnsOne";
 
@@ -16,13 +11,14 @@
     //canonical URL
     if (seoSettings.CanonicalUrlsEnabled)
     {
-        var activeDiscussionsUrl = Model.TopicPageIndex > 0 ?
-            Url.RouteUrl(ForumDefaults.Routes.Public.ACTIVE_DISCUSSIONS_PAGED, new { pageNumber = Model.TopicPageIndex + 1 }, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant() :
-            Url.RouteUrl(ForumDefaults.Routes.Public.ACTIVE_DISCUSSIONS, null, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant();
+        var activeDiscussionsUrl = Model.TopicPageIndex > 0 
+            ? Url.RouteUrl(ForumDefaults.Routes.Public.ACTIVE_DISCUSSIONS_PAGED, new { pageNumber = Model.TopicPageIndex + 1 }, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant()
+            : Url.RouteUrl(ForumDefaults.Routes.Public.ACTIVE_DISCUSSIONS, null, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant();
 
         NopHtml.AddCanonicalUrlParts(activeDiscussionsUrl, seoSettings.QueryStringInCanonicalUrlsEnabled);
     }
 }
+
 <div class="page active-discussions-page">
     @await Component.InvokeAsync(typeof(ForumBreadcrumbViewComponent))
     @await Html.PartialAsync("~/Plugins/Misc.Forums/Public/Views/_ForumHeader.cshtml")

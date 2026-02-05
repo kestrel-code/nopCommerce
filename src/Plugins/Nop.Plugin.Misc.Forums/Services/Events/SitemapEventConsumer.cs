@@ -63,7 +63,7 @@ public class SitemapEventConsumer : IConsumer<SitemapCreatedEvent>, IConsumer<Mo
         if (eventMessage.Model is not SitemapModel sitemapModel || !_forumSettings.ForumsEnabled)
             return;
 
-        sitemapModel.Items.Add(new SitemapModel.SitemapItemModel
+        sitemapModel.Items.Add(new()
         {
             GroupTitle = await _localizationService.GetResourceAsync("Sitemap.General"),
             Name = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Forums"),

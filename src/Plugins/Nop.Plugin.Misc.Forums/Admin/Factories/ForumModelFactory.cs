@@ -1,4 +1,5 @@
-﻿using Nop.Core;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Nop.Core;
 using Nop.Plugin.Misc.Forums.Admin.Models;
 using Nop.Plugin.Misc.Forums.Domain;
 using Nop.Plugin.Misc.Forums.Services;
@@ -54,7 +55,7 @@ public class ForumModelFactory
     /// </summary>
     /// <param name="searchModel">Forum search model</param>
     /// <returns>Forum search model</returns>
-    protected virtual ForumSearchModel PrepareForumSearchModel(ForumSearchModel searchModel)
+    private ForumSearchModel PrepareForumSearchModel(ForumSearchModel searchModel)
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
@@ -68,17 +69,15 @@ public class ForumModelFactory
 
     #region Methods
 
-
-
     /// <summary>
     /// Prepare configuration model
     /// </summary>
-    /// <param name="model">Forum settings model</param>
+    /// <param name="model">Configuration model</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the forum settings model
+    /// The task result contains the configuration model
     /// </returns>
-    public virtual async Task<ConfigurationModel> PrepareConfigurationModelAsync(ConfigurationModel model = null)
+    public async Task<ConfigurationModel> PrepareConfigurationModelAsync(ConfigurationModel model = null)
     {
         //load settings for a chosen store scope
         var storeId = await _storeContext.GetActiveStoreScopeConfigurationAsync();
@@ -91,32 +90,30 @@ public class ForumModelFactory
         model.ActiveStoreScopeConfiguration = storeId;
         model.ForumEditorValues = await forumSettings.ForumEditor.ToSelectListAsync();
 
-        if (storeId <= 0)
-            return model;
-
-        //fill in overridden values
-        model.ForumsEnabled_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ForumsEnabled, storeId);
-        model.RelativeDateTimeFormattingEnabled_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.RelativeDateTimeFormattingEnabled, storeId);
-        model.ShowCustomersPostCount_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ShowCustomersPostCount, storeId);
-        model.AllowGuestsToCreatePosts_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowGuestsToCreatePosts, storeId);
-        model.AllowGuestsToCreateTopics_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowGuestsToCreateTopics, storeId);
-        model.AllowCustomersToEditPosts_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowCustomersToEditPosts, storeId);
-        model.AllowCustomersToDeletePosts_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowCustomersToDeletePosts, storeId);
-        model.AllowPostVoting_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowPostVoting, storeId);
-        model.MaxVotesPerDay_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.MaxVotesPerDay, storeId);
-        model.AllowCustomersToManageSubscriptions_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowCustomersToManageSubscriptions, storeId);
-        model.TopicsPageSize_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.TopicsPageSize, storeId);
-        model.PostsPageSize_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.PostsPageSize, storeId);
-        model.ForumEditor_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ForumEditor, storeId);
-        model.SignaturesEnabled_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.SignaturesEnabled, storeId);
-        model.ActiveDiscussionsFeedEnabled_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ActiveDiscussionsFeedEnabled, storeId);
-        model.ActiveDiscussionsFeedCount_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ActiveDiscussionsFeedCount, storeId);
-        model.ForumFeedsEnabled_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ForumFeedsEnabled, storeId);
-        model.ForumFeedCount_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ForumFeedCount, storeId);
-        model.SearchResultsPageSize_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.SearchResultsPageSize, storeId);
-        model.ActiveDiscussionsPageSize_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ActiveDiscussionsPageSize, storeId);
-        model.ShowCaptcha_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ShowCaptcha, storeId);
-
+        if (storeId > 0)
+        {
+            model.ForumsEnabled_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ForumsEnabled, storeId);
+            model.RelativeDateTimeFormattingEnabled_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.RelativeDateTimeFormattingEnabled, storeId);
+            model.ShowCustomersPostCount_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ShowCustomersPostCount, storeId);
+            model.AllowGuestsToCreatePosts_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowGuestsToCreatePosts, storeId);
+            model.AllowGuestsToCreateTopics_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowGuestsToCreateTopics, storeId);
+            model.AllowCustomersToEditPosts_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowCustomersToEditPosts, storeId);
+            model.AllowCustomersToDeletePosts_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowCustomersToDeletePosts, storeId);
+            model.AllowPostVoting_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowPostVoting, storeId);
+            model.MaxVotesPerDay_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.MaxVotesPerDay, storeId);
+            model.AllowCustomersToManageSubscriptions_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.AllowCustomersToManageSubscriptions, storeId);
+            model.TopicsPageSize_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.TopicsPageSize, storeId);
+            model.PostsPageSize_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.PostsPageSize, storeId);
+            model.ForumEditor_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ForumEditor, storeId);
+            model.SignaturesEnabled_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.SignaturesEnabled, storeId);
+            model.ActiveDiscussionsFeedEnabled_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ActiveDiscussionsFeedEnabled, storeId);
+            model.ActiveDiscussionsFeedCount_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ActiveDiscussionsFeedCount, storeId);
+            model.ForumFeedsEnabled_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ForumFeedsEnabled, storeId);
+            model.ForumFeedCount_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ForumFeedCount, storeId);
+            model.SearchResultsPageSize_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.SearchResultsPageSize, storeId);
+            model.ActiveDiscussionsPageSize_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ActiveDiscussionsPageSize, storeId);
+            model.ShowCaptcha_OverrideForStore = await _settingService.SettingExistsAsync(forumSettings, x => x.ShowCaptcha, storeId);
+        }
 
         var customer = await _workContext.GetCurrentCustomerAsync();
         model.HideCommonBlock = await _genericAttributeService.GetAttributeAsync<bool>(customer, ForumDefaults.HideCommonBlockAttributeName);
@@ -135,7 +132,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the forum group search model
     /// </returns>
-    public virtual Task<ForumGroupSearchModel> PrepareForumGroupSearchModelAsync(ForumGroupSearchModel searchModel)
+    public Task<ForumGroupSearchModel> PrepareForumGroupSearchModelAsync(ForumGroupSearchModel searchModel)
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
@@ -156,7 +153,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the forum group list model
     /// </returns>
-    public virtual async Task<ForumGroupListModel> PrepareForumGroupListModelAsync(ForumGroupSearchModel searchModel)
+    public async Task<ForumGroupListModel> PrepareForumGroupListModelAsync(ForumGroupSearchModel searchModel)
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
@@ -191,7 +188,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the forum group model
     /// </returns>
-    public virtual Task<ForumGroupModel> PrepareForumGroupModelAsync(ForumGroupModel model, ForumGroup forumGroup, bool excludeProperties = false)
+    public Task<ForumGroupModel> PrepareForumGroupModelAsync(ForumGroupModel model, ForumGroup forumGroup, bool excludeProperties = false)
     {
         //fill in model values from the entity
         if (forumGroup != null)
@@ -213,7 +210,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the forum list model
     /// </returns>
-    public virtual async Task<ForumListModel> PrepareForumListModelAsync(ForumSearchModel searchModel, ForumGroup forumGroup)
+    public async Task<ForumListModel> PrepareForumListModelAsync(ForumSearchModel searchModel, ForumGroup forumGroup)
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
@@ -250,7 +247,7 @@ public class ForumModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the forum model
     /// </returns>
-    public virtual async Task<ForumModel> PrepareForumModelAsync(ForumModel model, Forum forum, bool excludeProperties = false)
+    public async Task<ForumModel> PrepareForumModelAsync(ForumModel model, Forum forum, bool excludeProperties = false)
     {
         //fill in model values from the entity
         if (forum != null)
@@ -261,10 +258,9 @@ public class ForumModelFactory
             model.DisplayOrder = 1;
 
         //prepare available forum groups
-        foreach (var forumGroup in await _forumService.GetAllForumGroupsAsync())
-        {
-            model.ForumGroups.Add(forumGroup.ToModel<ForumGroupModel>());
-        }
+        model.ForumGroups = (await _forumService.GetAllForumGroupsAsync())
+            .Select(forumGroup => new SelectListItem(forumGroup.Name, forumGroup.Id.ToString()))
+            .ToList();
 
         return model;
     }

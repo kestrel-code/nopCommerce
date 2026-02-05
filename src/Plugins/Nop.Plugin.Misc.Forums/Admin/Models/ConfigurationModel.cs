@@ -103,6 +103,5 @@ public record ConfigurationModel : BaseNopModel, ISettingsModel
     public bool HidePageSizesBlock { get; set; }
     public bool HideFeedsBlock { get; set; }
 
-
     #endregion
 }

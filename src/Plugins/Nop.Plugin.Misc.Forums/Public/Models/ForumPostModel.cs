@@ -2,11 +2,10 @@
 
 namespace Nop.Plugin.Misc.Forums.Public.Models;
 
-public record ForumPostModel : BaseNopModel
+public record ForumPostModel : BaseNopEntityModel
 {
     #region Properties
 
-    public int Id { get; set; }
     public int ForumTopicId { get; set; }
     public string ForumTopicSeName { get; set; }
     public string FormattedText { get; set; }

@@ -2,6 +2,7 @@
 using Nop.Core.Domain.Messages;
 using Nop.Services.Events;
 using Nop.Services.Localization;
+using Nop.Web.Areas.Admin.Models.Menus;
 using Nop.Web.Framework.Events;
 using Nop.Web.Framework.Models;
 using Nop.Web.Models.Customer;
@@ -72,10 +73,10 @@ public class EventConsumer : IConsumer<CustomerPermanentlyDeleted>,
             return Task.CompletedTask;
 
         if (eventMessage.MessageTemplate.Name.Equals(ForumDefaults.NEW_FORUM_TOPIC_MESSAGE, StringComparison.InvariantCultureIgnoreCase))
-            eventMessage.AddTokens("%Forums.TopicURL%", "%Forums.TopicName%");
+            eventMessage.AddTokens("%Forums.ForumURL%", "%Forums.ForumName%", "%Forums.TopicURL%", "%Forums.TopicName%");
 
         if (eventMessage.MessageTemplate.Name.Equals(ForumDefaults.NEW_FORUM_POST_MESSAGE, StringComparison.InvariantCultureIgnoreCase))
-            eventMessage.AddTokens("%Forums.PostAuthor%", "%Forums.PostBody%");
+            eventMessage.AddTokens("%Forums.ForumURL%", "%Forums.ForumName%", "%Forums.TopicURL%", "%Forums.TopicName%", "%Forums.PostAuthor%", "%Forums.PostBody%");
 
         return Task.CompletedTask;
     }
@@ -89,16 +90,30 @@ public class EventConsumer : IConsumer<CustomerPermanentlyDeleted>,
     /// <returns>A task that represents the asynchronous operation</returns>
     public async Task HandleEventAsync(ModelPreparedEvent<BaseNopModel> eventMessage)
     {
-        if (_forumSettings.ForumsEnabled && _forumSettings.AllowCustomersToManageSubscriptions &&
-            eventMessage?.Model is CustomerNavigationModel customerNavigationModel)
+        if (!_forumSettings.ForumsEnabled)
+            return;
+
+        if (eventMessage?.Model is MenuItemModel menuItemModel)
         {
-            customerNavigationModel.CustomerNavigationItems.Add(new CustomerNavigationItemModel
+            menuItemModel.AvailableStandardRoutes.Add(new()
             {
-                RouteName = ForumDefaults.Routes.Public.CUSTOMER_FORUM_SUBSCRIPTIONS,
-                Title = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Account.ForumSubscriptions"),
-                Tab = ForumDefaults.ForumCustomerNavigationTab,
-                ItemClass = "forum-subscriptions"
+                Text = await _localizationService.GetResourceAsync("Plugins.Misc.Forums"),
+                Value = ForumDefaults.Routes.Public.BOARDS
             });
+        }
+
+        if (eventMessage?.Model is CustomerNavigationModel customerNavigationModel)
+        {
+            if (_forumSettings.AllowCustomersToManageSubscriptions)
+            {
+                customerNavigationModel.CustomerNavigationItems.Add(new()
+                {
+                    RouteName = ForumDefaults.Routes.Public.CUSTOMER_FORUM_SUBSCRIPTIONS,
+                    Title = await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Account.ForumSubscriptions"),
+                    Tab = ForumDefaults.ForumCustomerNavigationTab,
+                    ItemClass = "forum-subscriptions"
+                });
+            }
         }
     }
 

@@ -1,6 +1,5 @@
 ﻿@model SearchModel
 
-@inject ILocalizationService localizationService
 @{
     Layout = "_ColumnsOne";
 
@@ -9,6 +8,7 @@
     //page class
     NopHtml.AppendPageCssClassParts("html-forum-search-page");
 }
+
 <script asp-location="Footer">
     $(function() {
         toggleAdvancedSearch();
@@ -172,7 +172,7 @@
                                         </td>
                                         <td class="topic-details">
                                             <div class="topic-title">
-                                                @Html.RouteLink(topic.Subject, "TopicSlug", new { id = topic.Id, slug = topic.SeName })
+                                                @Html.RouteLink(topic.Subject, ForumDefaults.Routes.Public.TOPIC_SLUG, new { id = topic.Id, slug = topic.SeName })
                                                 @if (!string.IsNullOrEmpty(topicText))
                                                 {
                                                     <span class="topic-type">@topicText</span>

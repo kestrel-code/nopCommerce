@@ -51,7 +51,7 @@ public class ForumController : BaseAdminController
     #region Configure
 
     [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
-    public virtual async Task<IActionResult> Configuration()
+    public async Task<IActionResult> Configure()
     {
         //prepare model
         var model = await _forumModelFactory.PrepareConfigurationModelAsync();
@@ -61,7 +61,7 @@ public class ForumController : BaseAdminController
 
     [HttpPost]
     [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
-    public virtual async Task<IActionResult> Configuration(ConfigurationModel model)
+    public async Task<IActionResult> Configure(ConfigurationModel model)
     {
         if (ModelState.IsValid)
         {
@@ -100,7 +100,7 @@ public class ForumController : BaseAdminController
 
             _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Configuration.Updated"));
 
-            return RedirectToAction(nameof(Configuration));
+            return RedirectToAction(nameof(Configure));
         }
 
         //prepare model
@@ -114,23 +114,23 @@ public class ForumController : BaseAdminController
 
     #region List
 
-    public virtual IActionResult Index()
+    public IActionResult Index()
     {
         return RedirectToAction(nameof(List));
     }
 
     [CheckPermission(ForumDefaults.Permissions.FORUMS_VIEW)]
-    public virtual async Task<IActionResult> List()
+    public async Task<IActionResult> List()
     {
         //prepare model
-        var model = await _forumModelFactory.PrepareForumGroupSearchModelAsync(new ForumGroupSearchModel());
+        var model = await _forumModelFactory.PrepareForumGroupSearchModelAsync(new());
 
         return View("~/Plugins/Misc.Forums/Admin/Views/List.cshtml", model);
     }
 
     [HttpPost]
     [CheckPermission(ForumDefaults.Permissions.FORUMS_VIEW)]
-    public virtual async Task<IActionResult> ForumGroupList(ForumGroupSearchModel searchModel)
+    public async Task<IActionResult> ForumGroupList(ForumGroupSearchModel searchModel)
     {
         //prepare model
         var model = await _forumModelFactory.PrepareForumGroupListModelAsync(searchModel);
@@ -140,11 +140,11 @@ public class ForumController : BaseAdminController
 
     [HttpPost]
     [CheckPermission(ForumDefaults.Permissions.FORUMS_VIEW)]
-    public virtual async Task<IActionResult> ForumList(ForumSearchModel searchModel)
+    public async Task<IActionResult> ForumList(ForumSearchModel searchModel)
     {
         //try to get a forum group with the specified id
         var forumGroup = await _forumService.GetForumGroupByIdAsync(searchModel.ForumGroupId)
-                         ?? throw new ArgumentException("No forum group found with the specified id");
+            ?? throw new ArgumentException("No forum group found with the specified id");
 
         //prepare model
         var model = await _forumModelFactory.PrepareForumListModelAsync(searchModel, forumGroup);
@@ -157,17 +157,17 @@ public class ForumController : BaseAdminController
     #region Create
 
     [CheckPermission(ForumDefaults.Permissions.FORUMS_MANAGE)]
-    public virtual async Task<IActionResult> CreateForumGroup()
+    public async Task<IActionResult> CreateForumGroup()
     {
         //prepare model
-        var model = await _forumModelFactory.PrepareForumGroupModelAsync(new ForumGroupModel(), null);
+        var model = await _forumModelFactory.PrepareForumGroupModelAsync(new(), null);
 
         return View("~/Plugins/Misc.Forums/Admin/Views/CreateForumGroup.cshtml", model);
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     [CheckPermission(ForumDefaults.Permissions.FORUMS_MANAGE)]
-    public virtual async Task<IActionResult> CreateForumGroup(ForumGroupModel model, bool continueEditing)
+    public async Task<IActionResult> CreateForumGroup(ForumGroupModel model, bool continueEditing)
     {
         if (ModelState.IsValid)
         {
@@ -189,17 +189,17 @@ public class ForumController : BaseAdminController
     }
 
     [CheckPermission(ForumDefaults.Permissions.FORUMS_MANAGE)]
-    public virtual async Task<IActionResult> CreateForum()
+    public async Task<IActionResult> CreateForum()
     {
         //prepare model
-        var model = await _forumModelFactory.PrepareForumModelAsync(new ForumModel(), null);
+        var model = await _forumModelFactory.PrepareForumModelAsync(new(), null);
 
         return View("~/Plugins/Misc.Forums/Admin/Views/CreateForum.cshtml", model);
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     [CheckPermission(ForumDefaults.Permissions.FORUMS_MANAGE)]
-    public virtual async Task<IActionResult> CreateForum(ForumModel model, bool continueEditing)
+    public async Task<IActionResult> CreateForum(ForumModel model, bool continueEditing)
     {
         if (ModelState.IsValid)
         {
@@ -225,7 +225,7 @@ public class ForumController : BaseAdminController
     #region Edit
 
     [CheckPermission(ForumDefaults.Permissions.FORUMS_VIEW)]
-    public virtual async Task<IActionResult> EditForumGroup(int id)
+    public async Task<IActionResult> EditForumGroup(int id)
     {
         //try to get a forum group with the specified id
         var forumGroup = await _forumService.GetForumGroupByIdAsync(id);
@@ -240,7 +240,7 @@ public class ForumController : BaseAdminController
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     [CheckPermission(ForumDefaults.Permissions.FORUMS_MANAGE)]
-    public virtual async Task<IActionResult> EditForumGroup(ForumGroupModel model, bool continueEditing)
+    public async Task<IActionResult> EditForumGroup(ForumGroupModel model, bool continueEditing)
     {
         //try to get a forum group with the specified id
         var forumGroup = await _forumService.GetForumGroupByIdAsync(model.Id);
@@ -266,7 +266,7 @@ public class ForumController : BaseAdminController
     }
 
     [CheckPermission(ForumDefaults.Permissions.FORUMS_VIEW)]
-    public virtual async Task<IActionResult> EditForum(int id)
+    public async Task<IActionResult> EditForum(int id)
     {
         //try to get a forum with the specified id
         var forum = await _forumService.GetForumByIdAsync(id);
@@ -281,7 +281,7 @@ public class ForumController : BaseAdminController
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     [CheckPermission(ForumDefaults.Permissions.FORUMS_MANAGE)]
-    public virtual async Task<IActionResult> EditForum(ForumModel model, bool continueEditing)
+    public async Task<IActionResult> EditForum(ForumModel model, bool continueEditing)
     {
         //try to get a forum with the specified id
         var forum = await _forumService.GetForumByIdAsync(model.Id);
@@ -312,7 +312,7 @@ public class ForumController : BaseAdminController
 
     [HttpPost]
     [CheckPermission(ForumDefaults.Permissions.FORUMS_MANAGE)]
-    public virtual async Task<IActionResult> DeleteForumGroup(int id)
+    public async Task<IActionResult> DeleteForumGroup(int id)
     {
         //try to get a forum group with the specified id
         var forumGroup = await _forumService.GetForumGroupByIdAsync(id);
@@ -328,7 +328,7 @@ public class ForumController : BaseAdminController
 
     [HttpPost]
     [CheckPermission(ForumDefaults.Permissions.FORUMS_MANAGE)]
-    public virtual async Task<IActionResult> DeleteForum(int id)
+    public async Task<IActionResult> DeleteForum(int id)
     {
         //try to get a forum with the specified id
         var forum = await _forumService.GetForumByIdAsync(id);

@@ -10,7 +10,7 @@ public record ProfilePostsModel : BaseNopModel
     public string CustomerName { get; set; }
     public int CustomerId { get; set; }
     public PagerModel PagerModel { get; set; }
-    public IList<PostsModel> Posts { get; set; }
+    public List<PostsModel> Posts { get; set; } = new();
 
     #endregion
 }
