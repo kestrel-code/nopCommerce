@@ -62,3 +62,14 @@
         </div>
     </div>
 </div>
+<script>
+    $(function() {
+        $('#@Html.IdFor(model => model.ShowCaptcha)').click(toggleCheckbox);
+        toggleCheckbox();
+    });
+
+    function toggleCheckbox() {
+        warningValidation('@Url.Action("ShowCaptcha", "Forum")', '@Html.NameFor(model => model.ShowCaptcha)',
+            { showCaptcha: $('#@Html.IdFor(model => model.ShowCaptcha)').is(':checked') });
+    }
+</script>

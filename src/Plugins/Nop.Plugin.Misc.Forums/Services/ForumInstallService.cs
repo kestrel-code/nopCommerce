@@ -1,4 +1,5 @@
-﻿using Nop.Core.Domain.Customers;
+﻿using Nop.Core;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Security;
@@ -103,6 +104,16 @@ public class ForumInstallService
                 ShowCaptcha = false
             });
         }
+        else
+        {
+            var showCaptchaOnForums = await _settingService.GetSettingAsync($"{nameof(CaptchaSettings)}.ShowOnForum");
+            if (showCaptchaOnForums is not null)
+            {
+                forumSettings.ShowCaptcha = CommonHelper.To<bool>(showCaptchaOnForums.Value);
+                await _settingService.SaveSettingAsync(forumSettings, settings => settings.ShowCaptcha, clearCache: false);
+                await _settingService.DeleteSettingAsync(showCaptchaOnForums);
+            }
+        }
     }
 
     /// <summary>
@@ -191,6 +202,7 @@ public class ForumInstallService
             ["Plugins.Misc.Forums.Configuration.TopicsPageSize.Hint"] = "Set the page size for topics in forums e.g. '10' topics per page.",
             ["Plugins.Misc.Forums.Configuration.ShowCaptcha"] = "Show CAPTCHA on forum",
             ["Plugins.Misc.Forums.Configuration.ShowCaptcha.Hint"] = "Check to show CAPTCHA on forum, when editing and creating a topic or post.",
+            ["Plugins.Misc.Forums.Configuration.ShowCaptcha.Warning"] = "Don't forget to enable CAPTCHA in the <a href=\"{0}\" target=\"_blank\">General settings</a> for correct working.",
 
             ["Plugins.Misc.Forums.ActiveDiscussions"] = "Active discussions",
             ["Plugins.Misc.Forums.ActiveDiscussions.ViewAll"] = "View all",
@@ -221,6 +233,8 @@ public class ForumInstallService
             ["Plugins.Misc.Forums.Joined"] = "Joined",
             ["Plugins.Misc.Forums.LatestPost"] = "Latest Post",
             ["Plugins.Misc.Forums.Location"] = "Location",
+            ["Plugins.Misc.Forums.MarkdownEditor.TabWrite"] = "Write",
+            ["Plugins.Misc.Forums.MarkdownEditor.TabPreview"] = "Preview",
             ["Plugins.Misc.Forums.Moderator"] = "Moderator",
             ["Plugins.Misc.Forums.MoveTopic"] = "Move Topic",
             ["Plugins.Misc.Forums.NewPost"] = "New Post",

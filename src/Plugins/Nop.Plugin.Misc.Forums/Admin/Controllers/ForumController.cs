@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
+using Nop.Core.Domain.Security;
 using Nop.Plugin.Misc.Forums.Admin.Factories;
 using Nop.Plugin.Misc.Forums.Admin.Models;
 using Nop.Plugin.Misc.Forums.Domain;
@@ -8,13 +9,20 @@ using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Messages;
 using Nop.Services.Security;
-using Nop.Web.Areas.Admin.Controllers;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
+using Nop.Web.Framework;
+using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Misc.Forums.Admin.Controllers;
 
-public class ForumController : BaseAdminController
+[Area(AreaNames.ADMIN)]
+[AutoValidateAntiforgeryToken]
+[ValidateIpAddress]
+[AuthorizeAdmin]
+[SaveSelectedTab]
+
+public class ForumController : BasePluginController
 {
     #region Fields
 
@@ -108,6 +116,22 @@ public class ForumController : BaseAdminController
 
         //if we got this far, something failed, redisplay form
         return View("~/Plugins/Misc.Forums/Admin/Views/Configure.cshtml", model);
+    }
+
+
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
+    public async Task<IActionResult> ShowCaptcha(bool showCaptcha)
+    {
+        if (!showCaptcha)
+            return Json(new { Result = string.Empty });
+
+        var captchaSettings = await _settingService.LoadSettingAsync<CaptchaSettings>();
+        if (captchaSettings.Enabled)
+            return Json(new { Result = string.Empty });
+
+        var url = Url.Action("GeneralCommon", "Setting");
+        var warning = string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.Configuration.ShowCaptcha.Warning"), url);
+        return Json(new { Result = warning });
     }
 
     #endregion

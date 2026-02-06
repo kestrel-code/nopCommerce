@@ -1,14 +1,14 @@
 ﻿@model ForumPostTextModel
 
 <div class="markdown-editor-container" id="md-editor">
-    <script asp-location="Footer" src="~/lib_npm/marked/marked.umd.js"></script>
-    <script asp-location="Footer" src="~/js/mdeditor/script.js"></script>
-    <link rel="stylesheet" href="~/js/mdeditor/style.css" />
+    <script asp-location="Footer" src="~/Plugins/Misc.Forums/Content/js/marked.umd.js"></script>
+    <script asp-location="Footer" src="~/Plugins/Misc.Forums/Content/js/mdeditor/script.js"></script>
+    <link rel="stylesheet" href="~/Plugins/Misc.Forums/Content/js/mdeditor/style.css" />
 
     <div class="editor-header">
         <div class="editor-tabs">
-            <button type="button" class="tab-button active" data-tab="write">@T("MarkdownEditor.TabWrite")</button>
-            <button type="button" class="tab-button" data-tab="preview">@T("MarkdownEditor.TabPreview")</button>
+            <button type="button" class="tab-button active" data-tab="write">@T("Plugins.Misc.Forums.MarkdownEditor.TabWrite")</button>
+            <button type="button" class="tab-button" data-tab="preview">@T("Plugins.Misc.Forums.MarkdownEditor.TabPreview")</button>
         </div>
         <div class="toolbar" id="editor-toolbar"></div>
     </div>
@@ -24,7 +24,7 @@
     
     <script asp-location="Footer">
         document.addEventListener('DOMContentLoaded', () => {
-            initializeMarkdownEditor('@Html.IdFor(model => model.Text)','@Url.Content("~/js/mdeditor/icons/")');
+            initializeMarkdownEditor('@Html.IdFor(model => model.Text)','@Url.Content("~/Plugins/Misc.Forums/Content/js/mdeditor/icons/")');
             setupTabs('md-editor', '@Html.IdFor(model => model.Text)');
         });
     </script>

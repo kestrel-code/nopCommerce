@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.Encodings.Web;
+using Humanizer;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using Nop.Core;
@@ -20,7 +21,6 @@ using Nop.Services.Helpers;
 using Nop.Services.Html;
 using Nop.Services.Localization;
 using Nop.Services.Media;
-using Nop.Web.Framework.Extensions;
 using Nop.Web.Framework.Mvc.Routing;
 using Nop.Web.Infrastructure;
 using Nop.Web.Models.Common;
@@ -193,6 +193,29 @@ public class ForumModelFactory
         };
 
         return forumTopicModel;
+    }
+
+    /// <summary>
+    /// Relative formatting of DateTime (e.g. 2 hours ago, a month ago)
+    /// </summary>
+    /// <param name="source">Source (UTC format)</param>
+    /// <param name="languageCode">Language culture code</param>
+    /// <returns>Formatted date and time string</returns>
+    public static string RelativeFormat(DateTime source, string languageCode = "en-US")
+    {
+        var ts = new TimeSpan(DateTime.UtcNow.Ticks - source.Ticks);
+        var delta = ts.TotalSeconds;
+
+        CultureInfo culture;
+        try
+        {
+            culture = new CultureInfo(languageCode);
+        }
+        catch (CultureNotFoundException)
+        {
+            culture = new CultureInfo("en-US");
+        }
+        return TimeSpan.FromSeconds(delta).Humanize(precision: 1, culture: culture, maxUnit: TimeUnit.Year);
     }
 
     #endregion
@@ -446,7 +469,7 @@ public class ForumModelFactory
             if (_forumSettings.RelativeDateTimeFormattingEnabled)
             {
                 var languageCode = (await _workContext.GetWorkingLanguageAsync()).LanguageCulture;
-                var postCreatedAgo = post.CreatedOnUtc.RelativeFormat(languageCode);
+                var postCreatedAgo = RelativeFormat(post.CreatedOnUtc, languageCode);
                 forumPostModel.PostCreatedOnStr = string.Format(await _localizationService.GetResourceAsync("Common.RelativeDateTime.Past"), postCreatedAgo);
             }
             else
@@ -869,7 +892,7 @@ public class ForumModelFactory
         var languageCode = (await _workContext.GetWorkingLanguageAsync()).LanguageCulture;
         if (_forumSettings.RelativeDateTimeFormattingEnabled)
         {
-            var postCreatedAgo = forumPost.CreatedOnUtc.RelativeFormat(languageCode);
+            var postCreatedAgo = RelativeFormat(forumPost.CreatedOnUtc, languageCode);
             model.PostCreatedOnStr = string.Format(await _localizationService.GetResourceAsync("Common.RelativeDateTime.Past"), postCreatedAgo);
         }
         else
@@ -1089,7 +1112,7 @@ public class ForumModelFactory
             if (_forumSettings.RelativeDateTimeFormattingEnabled)
             {
                 var languageCode = (await _workContext.GetWorkingLanguageAsync()).LanguageCulture;
-                var postedAgo = forumPost.CreatedOnUtc.RelativeFormat(languageCode);
+                var postedAgo = RelativeFormat(forumPost.CreatedOnUtc, languageCode);
                 posted = string.Format(await _localizationService.GetResourceAsync("Common.RelativeDateTime.Past"), postedAgo);
             }
             else

@@ -198,6 +198,7 @@ public class LocalizationMigration : MigrationBase
             "Account.ForumSubscriptions.InfoColumn",
             "Account.ForumSubscriptions.NoSubscriptions",
 
+            //#7336
             "Admin.Configuration.Settings.Forums",
             "Admin.Configuration.Settings.Forums.ActiveDiscussionsFeedCount",
             "Admin.Configuration.Settings.Forums.ActiveDiscussionsFeedCount.Hint",
@@ -243,10 +244,8 @@ public class LocalizationMigration : MigrationBase
             "Admin.Configuration.Settings.Forums.SignaturesEnabled.Hint",
             "Admin.Configuration.Settings.Forums.TopicsPageSize",
             "Admin.Configuration.Settings.Forums.TopicsPageSize.Hint",
-
             "Admin.Configuration.Settings.GeneralCommon.CaptchaShowOnForum",
             "Admin.Configuration.Settings.GeneralCommon.CaptchaShowOnForum.Hint",
-
             "Admin.ContentManagement.Forums",
             "Admin.ContentManagement.Forums.Forum",
             "Admin.ContentManagement.Forums.Forum.Added",
@@ -279,9 +278,6 @@ public class LocalizationMigration : MigrationBase
             "Admin.ContentManagement.Forums.ForumGroup.Fields.Name.Hint",
             "Admin.ContentManagement.Forums.ForumGroup.Fields.Name.Required",
             "Admin.ContentManagement.Forums.ForumGroup.Updated",
-
-            "Admin.ContentManagement.MessageTemplates.Description.Forums.NewForumPost",
-            "Admin.ContentManagement.MessageTemplates.Description.Forums.NewForumTopic",
 
             "Admin.Documentation.Reference.Forums",
 
@@ -397,6 +393,9 @@ public class LocalizationMigration : MigrationBase
             "Forum.WatchForum",
             "Forum.WatchTopic",
 
+            "MarkdownEditor.TabWrite",
+            "MarkdownEditor.TabPreview",
+
             "Literals.Nop.Core.Http.NopRouteNames.General.Boards",
             "PageTitle.ForumSubscriptions",
 
@@ -444,7 +443,7 @@ public class LocalizationMigration : MigrationBase
             //#7907
             ["Wishlist.RenameCustomWishlist"] = "Rename wishlist",
 
-            //#
+            //#7336
             ["Admin.ContentManagement.MessageTemplates.Description.Customer.NewPM"] = "This message template is used when the customer gets a notification about a new private message being received. You can set up this option by ticking the checkbox <strong>Show alert for PM</strong> in Configuration - Settings - Customer settings.",
 
         });

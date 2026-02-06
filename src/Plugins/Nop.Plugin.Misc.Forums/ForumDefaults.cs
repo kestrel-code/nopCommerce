@@ -224,52 +224,52 @@ public class ForumDefaults
             /// <summary>
             /// Gets the forum search route name
             /// </summary>
-            public const string BOARDS_SEARCH = "Search";
+            public const string BOARDS_SEARCH = ROUTE_PREFIX + "Search";
 
             /// <summary>
             /// Gets the post vote route name
             /// </summary>
-            public const string POST_VOTE = "PostVote";
+            public const string POST_VOTE = ROUTE_PREFIX + "PostVote";
 
             /// <summary>
             /// Gets the topic watch route name
             /// </summary>
-            public const string TOPIC_WATCH = "TopicWatch";
+            public const string TOPIC_WATCH = ROUTE_PREFIX + "TopicWatch";
 
             /// <summary>
             /// Gets the forum watch route name
             /// </summary>
-            public const string FORUM_WATCH = "ForumWatch";
+            public const string FORUM_WATCH = ROUTE_PREFIX + "ForumWatch";
 
             /// <summary>
             /// Gets the forums RSS (file result) route name
             /// </summary>
-            public const string ACTIVE_DISCUSSIONS_RSS = "ActiveDiscussionsRSS";
+            public const string ACTIVE_DISCUSSIONS_RSS = ROUTE_PREFIX + "ActiveDiscussionsRSS";
 
             /// <summary>
             /// Gets the active discussions route name
             /// </summary>
-            public const string ACTIVE_DISCUSSIONS = "ActiveDiscussions";
+            public const string ACTIVE_DISCUSSIONS = ROUTE_PREFIX + "ActiveDiscussions";
 
             /// <summary>
             /// Gets the active discussions paged route name
             /// </summary>
-            public const string ACTIVE_DISCUSSIONS_PAGED = "ActiveDiscussionsPaged";
+            public const string ACTIVE_DISCUSSIONS_PAGED = ROUTE_PREFIX + "ActiveDiscussionsPaged";
 
             /// <summary>
             /// Gets the customer forum subscriptions route name
             /// </summary>
-            public const string CUSTOMER_FORUM_SUBSCRIPTIONS = "CustomerForumSubscriptions";
+            public const string CUSTOMER_FORUM_SUBSCRIPTIONS = ROUTE_PREFIX + "CustomerForumSubscriptions";
 
             /// <summary>
             /// Gets the customer's forum posts route name
             /// </summary>
-            public const string FORUM_PROFILE_POSTS = "ProfileForumPosts";
+            public const string FORUM_PROFILE_POSTS = ROUTE_PREFIX + "ProfileForumPosts";
 
             /// <summary>
             /// Gets the customer's forum posts route name (paged)
             /// </summary>
-            public const string FORUM_PROFILE_POSTS_PAGED = "ProfileForumPostsPaged";
+            public const string FORUM_PROFILE_POSTS_PAGED = ROUTE_PREFIX + "ProfileForumPostsPaged";
         }
     }
 

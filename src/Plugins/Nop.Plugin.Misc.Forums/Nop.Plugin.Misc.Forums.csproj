@@ -14,7 +14,7 @@
     <!--Set this parameter to true to get the dlls copied from the NuGet cache to the output of your project.
     You need to set this parameter to true if your plugin has a nuget package 
     to ensure that the dlls copied from the NuGet cache to the output of your project-->
-    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
@@ -46,6 +46,19 @@
     <None Remove="Content\images\vote-up-selected.png" />
     <None Remove="Content\images\vote-up.png" />
     <None Remove="Content\images\watch.png" />
+    <None Remove="Content\js\marked.umd.js" />
+    <None Remove="Content\js\mdeditor\icons\bold.svg" />
+    <None Remove="Content\js\mdeditor\icons\code-block.svg" />
+    <None Remove="Content\js\mdeditor\icons\code.svg" />
+    <None Remove="Content\js\mdeditor\icons\heading.svg" />
+    <None Remove="Content\js\mdeditor\icons\image.svg" />
+    <None Remove="Content\js\mdeditor\icons\italic.svg" />
+    <None Remove="Content\js\mdeditor\icons\link.svg" />
+    <None Remove="Content\js\mdeditor\icons\list-ol.svg" />
+    <None Remove="Content\js\mdeditor\icons\list-ul.svg" />
+    <None Remove="Content\js\mdeditor\icons\quote.svg" />
+    <None Remove="Content\js\mdeditor\script.js" />
+    <None Remove="Content\js\mdeditor\style.css" />
     <None Remove="Content\styles.css" />
     <None Remove="Content\styles.rtl.css" />
     <None Remove="logo.png" />
@@ -163,6 +176,45 @@
     <Content Include="Content\images\watch.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\js\marked.umd.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\icons\bold.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\icons\code-block.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\icons\code.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\icons\heading.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\icons\image.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\icons\italic.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\icons\link.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\icons\list-ol.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\icons\list-ul.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\icons\quote.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\script.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\mdeditor\style.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Content\styles.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -270,6 +322,10 @@
   <ItemGroup>
     <ProjectReference Include="$(SolutionDir)\Presentation\Nop.Web\Nop.Web.csproj" />
     <ClearPluginAssemblies Include="$(SolutionDir)\Build\ClearPluginAssemblies.proj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Humanizer" Version="3.0.1" />
   </ItemGroup>
 
   <!-- This target execute after "Build" target -->
