@@ -103,32 +103,32 @@ public class ForumDefaults
         /// <summary>
         /// Gets a system name of the "Add forum topic"
         /// </summary>
-        public static string AddForumTopic => "AddForumTopic";
+        public static string AddForumTopic => "PublicStore.AddForumTopic";
 
         /// <summary>
         /// Gets a system name of the "Edit forum topic"
         /// </summary>
-        public static string EditForumTopic => "EditForumTopic";
+        public static string EditForumTopic => "PublicStore.EditForumTopic";
 
         /// <summary>
         /// Gets a system name of the "Delete forum topic"
         /// </summary>
-        public static string DeleteForumTopic => "DeleteForumTopic";
+        public static string DeleteForumTopic => "PublicStore.DeleteForumTopic";
 
         /// <summary>
         /// Gets a system name of the "Add forum post"
         /// </summary>
-        public static string AddForumPost => "AddForumPost";
+        public static string AddForumPost => "PublicStore.AddForumPost";
 
         /// <summary>
         /// Gets a system name of the "Edit forum post"
         /// </summary>
-        public static string EditForumPost => "EditForumPost";
+        public static string EditForumPost => "PublicStore.EditForumPost";
 
         /// <summary>
         /// Gets a system name of the "Delete forum post"
         /// </summary>
-        public static string DeleteForumPost => "DeleteForumPost";
+        public static string DeleteForumPost => "PublicStore.DeleteForumPost";
     }
 
     #endregion

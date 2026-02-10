@@ -378,7 +378,7 @@ public class BoardsController : BasePublicController
 
             //activity log
             await _customerActivityService.InsertActivityAsync(ForumDefaults.ActivityLogTypeSystemNames.DeleteForumTopic,
-                await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.DeleteForumTopic"), forumTopic);
+                string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.DeleteForumTopic"), forumTopic.Id));
 
             if (forum != null)
             {
@@ -466,7 +466,7 @@ public class BoardsController : BasePublicController
 
                 //activity log
                 await _customerActivityService.InsertActivityAsync(ForumDefaults.ActivityLogTypeSystemNames.AddForumTopic,
-                    await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.AddForumTopic"), forumTopic);
+                    string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.AddForumTopic"), forumTopic.Id));
 
                 //forum post
                 var forumPost = new ForumPost
@@ -584,7 +584,7 @@ public class BoardsController : BasePublicController
 
                 //activity log
                 await _customerActivityService.InsertActivityAsync(ForumDefaults.ActivityLogTypeSystemNames.EditForumTopic,
-                    await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.EditForumTopic"), forumTopic);
+                    string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.EditForumTopic"), forumTopic.Id));
 
                 //forum post                
                 var firstPost = await _forumService.GetFirstPostAsync(forumTopic);
@@ -678,7 +678,7 @@ public class BoardsController : BasePublicController
 
         //activity log
         await _customerActivityService.InsertActivityAsync(ForumDefaults.ActivityLogTypeSystemNames.DeleteForumPost,
-            await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.DeleteForumPost"), forumPost);
+            string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.DeleteForumPost"), forumPost.Id));
 
         //get topic one more time because it can be deleted (first or only post deleted)
         forumTopic = await _forumService.GetTopicByIdAsync(forumPost.TopicId);
@@ -757,7 +757,7 @@ public class BoardsController : BasePublicController
 
                 //activity log
                 await _customerActivityService.InsertActivityAsync(ForumDefaults.ActivityLogTypeSystemNames.AddForumPost,
-                    await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.AddForumPost"), forumPost);
+                    string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.AddForumPost"), forumPost.Id));
 
                 //subscription
                 if (await _forumService.IsCustomerAllowedToSubscribeAsync(customer))
@@ -866,7 +866,7 @@ public class BoardsController : BasePublicController
 
                 //activity log
                 await _customerActivityService.InsertActivityAsync(ForumDefaults.ActivityLogTypeSystemNames.EditForumPost,
-                    await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.EditForumPost"), forumPost);
+                    string.Format(await _localizationService.GetResourceAsync("Plugins.Misc.Forums.ActivityLog.EditForumPost"), forumPost.Id));
 
                 //subscription
                 if (await _forumService.IsCustomerAllowedToSubscribeAsync(customer))
