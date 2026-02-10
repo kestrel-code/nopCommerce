@@ -38,6 +38,8 @@ public partial record CustomerUserSettingsModel : BaseNopModel, ISettingsModel
 
     public MultiFactorAuthenticationSettingsModel MultiFactorAuthenticationSettings { get; set; }
 
+    public PrivateMessageSettingsModel PrivateMessageSettings { get; set; }
+
     public CustomerAttributeSearchModel CustomerAttributeSearchModel { get; set; }
 
     public AddressAttributeSearchModel AddressAttributeSearchModel { get; set; }
